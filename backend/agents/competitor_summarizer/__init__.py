@@ -1,0 +1,1 @@
+# Competitor Summarizer — ADK Agent
