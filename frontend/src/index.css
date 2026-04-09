@@ -143,31 +143,40 @@ body {
   50% { opacity: 0.4; }
 }
 
-/* ─── Scanline Loading Animation ─── */
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+/* ─── Skeleton Loading Animation ─── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-.loading-scanline {
+.skeleton-shimmer {
   position: relative;
   overflow: hidden;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
 }
 
-.loading-scanline::after {
+.skeleton-shimmer::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 50%;
+  bottom: 0;
   background: linear-gradient(
-    180deg,
-    transparent 0%,
-    var(--accent-blue-light) 50%,
-    transparent 100%
+    90deg,
+    transparent,
+    var(--accent-blue-light),
+    transparent
   );
-  animation: scanline 1.5s ease-in-out infinite;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line {
+  height: 12px;
+  background-color: var(--border-subtle);
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
 
 /* ─── Monospace Label ─── */

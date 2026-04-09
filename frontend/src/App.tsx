@@ -200,12 +200,17 @@ export default function App() {
   const [copiedJson, setCopiedJson] = useState(false);
 
   const handleAnalyze = async (targetUrl: string) => {
-    if (!targetUrl) return;
+    let formattedUrl = targetUrl.trim();
+    if (!formattedUrl) return;
+
+    if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+      formattedUrl = "https://" + formattedUrl;
+    }
 
     setLoading(true);
     setError(null);
     setResult(null);
-    setUrl(targetUrl);
+    setUrl(formattedUrl);
 
     try {
       const userId = "designer";
@@ -218,7 +223,7 @@ export default function App() {
       const rawText = await runAdkAgent(
         userId,
         sessionId,
-        `Analyze the competitor landing page at this URL: ${targetUrl}`
+        `Analyze the competitor landing page at this URL: ${formattedUrl}`
       );
 
       // 3. Parse JSON from agent response
@@ -298,7 +303,7 @@ ${result.designer_summary}`;
           <span style={{ opacity: 0.4 }}>|</span>
           <span style={{ color: 'var(--text-secondary)' }}>DESIGN_RESEARCH_v2.0</span>
         </div>
-        <span style={{ opacity: 0.5 }}>fadly.uzzaki</span>
+        <a href="https://fadlyzaki-design.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', transition: 'opacity 0.2s ease', opacity: 0.5 }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}>fadly.uzzaki ↗</a>
       </div>
 
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '48px 24px 80px' }}>
@@ -486,63 +491,36 @@ ${result.designer_summary}`;
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               style={{
-                marginTop: '64px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '20px',
-                padding: '48px 0',
+                marginTop: '48px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                gap: '16px',
               }}
             >
-              <div className="loading-scanline" style={{
-                width: '320px',
-                padding: '24px',
-                borderRadius: 'var(--radius-card)',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-card)',
-                boxShadow: 'var(--shadow-blue-sm)',
-                textAlign: 'center' as const,
-              }}>
-                <div style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                  color: 'var(--accent-blue)',
-                  fontWeight: 500,
-                  letterSpacing: '0.06em',
-                  marginBottom: 12,
-                }}>
-                  [ SCANNING ]
-                </div>
-                <Loader2 style={{
-                  width: 28,
-                  height: 28,
-                  color: 'var(--accent-blue)',
-                  animation: 'spin 1s linear infinite',
-                  margin: '0 auto 12px',
-                  display: 'block',
-                }} />
-                <p style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.6875rem',
-                  color: 'var(--text-muted)',
-                  margin: '0 0 4px',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.08em',
-                }}>
-                  ADK agent analyzing page...
-                </p>
-                <p style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontStyle: 'italic',
-                  fontSize: '0.75rem',
-                  color: 'var(--text-muted)',
-                  margin: 0,
-                  opacity: 0.7,
-                }}>
-                  This usually takes 10–20 seconds
-                </p>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <Loader2 style={{ width: 20, height: 20, color: 'var(--accent-blue)', animation: 'spin 1s linear infinite' }} />
+                <span className="mono-label" style={{ color: 'var(--accent-blue)' }}>[ ADK AGENT ANALYZING PAGE... THIS USUALLY TAKES 10-20 SECONDS ]</span>
               </div>
+              {RESULT_SECTIONS.map((section, i) => {
+                const isFullWidth = section.key === "information_hierarchy" || section.key === "design_opportunities" || section.key === "designer_summary";
+                return (
+                  <div
+                    key={`skeleton-${i}`}
+                    className="skeleton-shimmer"
+                    style={{
+                      padding: '24px',
+                      borderRadius: 'var(--radius-card)',
+                      gridColumn: isFullWidth ? '1 / -1' : undefined,
+                      minHeight: section.key === "designer_summary" ? '160px' : '140px',
+                    }}
+                  >
+                    <div className="skeleton-line" style={{ width: '40px', marginBottom: '16px' }} />
+                    <div className="skeleton-line" style={{ width: '60%' }} />
+                    <div className="skeleton-line" style={{ width: '90%' }} />
+                    <div className="skeleton-line" style={{ width: '75%' }} />
+                  </div>
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>
@@ -566,6 +544,16 @@ ${result.designer_summary}`;
                 marginBottom: '28px',
                 flexWrap: 'wrap' as const,
                 gap: '16px',
+                position: 'sticky',
+                top: 0,
+                zIndex: 40,
+                background: 'rgba(245, 245, 247, 0.85)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                paddingTop: '24px',
+                margin: '0 -24px 28px',
+                paddingLeft: '24px',
+                paddingRight: '24px',
               }}>
                 <div>
                   <div className="mono-label" style={{ marginBottom: '6px' }}>
@@ -705,7 +693,7 @@ ${result.designer_summary}`;
         letterSpacing: '0.06em',
         textTransform: 'uppercase' as const,
       }}>
-        BUILT BY FADLY UZZAKI · POWERED BY GEMINI AI · ADK + MCP
+        BUILT BY <a href="https://fadlyzaki-design.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', textDecoration: 'none', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '2px', transition: 'border-color 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--text-primary)'} onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}>FADLY UZZAKI</a> · POWERED BY GEMINI AI · ADK + MCP
       </div>
     </div>
   );
