@@ -1,5 +1,7 @@
 # Competitor Landing Page Summarizer
 
+**[PRIVATE & CONFIDENTIAL]**
+
 ---
 
 ## Participant Details
@@ -308,7 +310,7 @@ Analyze a competitor landing page and receive a structured benchmark summary for
 |---|---|
 | Frontend | https://competitor-summarizer-frontend-593545324546.us-central1.run.app |
 | Backend | https://competitor-summarizer-backend-593545324546.us-central1.run.app |
-| Repository | https://github.com/fadlyzaki/comp-landing-page-summarizer- |
+| Repository | *Private Repository* |
 
 ---
 
