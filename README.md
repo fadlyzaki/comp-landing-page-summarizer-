@@ -31,17 +31,18 @@ To make the system immediately accessible to anyone with **zero Google Cloud cre
 flowchart TD
     User["🧑‍💻 User / Designer / Evaluator"] --> Input{"Select Workflow"}
     
-    subgraph "Mode 1: Curated Live Demo Suite (Instant & 100% Free)"
-        Input -->|1-Click Demo| DemoData["⚡ 8 Real-World Benchmarks<br/>Linear · Stripe · Vercel · Supabase<br/>Notion · Figma · Raycast · Airbnb"]
+    subgraph "Mode 1: 100 Curated Benchmarks Directory (Instant & 100% Free)"
+        Input -->|1-Click Demo| DemoData["⚡ 100 Real-World Benchmarks (20 per Category)<br/>DevTools · Productivity · AI · Fintech · Consumer"]
         DemoData --> Matrix["📊 Side-by-Side Comparison Matrix"]
-        DemoData --> VisualCard["🎴 Artifact-Grade UX Cards & Scores"]
+        DemoData --> VisualCard["🎴 Artifact-Grade UX Cards, Specs & Scores"]
     end
 
     subgraph "Mode 2: Free Live AI Engine (Zero GCP Credits Needed)"
         Input -->|Enter Custom URL| CustomURL["🌐 Any Arbitrary URL"]
         CustomURL --> FreeKey["🔑 Free Google AI Studio API Key"]
         FreeKey --> Scraper["👀 Jina Reader / DOM Parser (r.jina.ai)"]
-        Scraper --> FreeGemini["🤖 Gemini 2.5 Flash (Free Tier REST)"]
+        FreeKey --> FreeGemini["🤖 Gemini 2.5 Flash (Free Tier REST)"]
+        Scraper --> FreeGemini
         FreeGemini --> VisualCard
     end
 
@@ -59,7 +60,7 @@ flowchart TD
 
 ## 🎨 Key Features & Design Intelligence
 
-When you feed the engine a URL, it structures a comprehensive payload across 9 design dimensions:
+When you feed the engine a URL (or select from the **100 curated benchmarks**), it structures a comprehensive payload across 9 design dimensions + 4 product specs:
 - **Core Value Proposition:** What the product promises and why it matters.
 - **Likely Target Audience:** Who the product is designed to convert.
 - **Call-to-Action Strategy:** Primary, secondary, and discovery conversion paths.
@@ -68,9 +69,10 @@ When you feed the engine a URL, it structures a comprehensive payload across 9 d
 - **UX Writing Observations:** Tone, clarity, and microcopy patterns.
 - **Potential Friction Points:** Where users encounter hesitation or ambiguity.
 - **Design Opportunities & Winning Angles:** Strategic gaps you can capitalize on.
-- **Product Designer Summary:** Opinionated executive takeaway from a senior designer.
+- **Product Designer Takeaway:** Decoupled editorial executive synthesis with compass badge.
+- **Product Specifications Bar:** Primary segment, monetization model, conversion path, and design signature.
 - **UX Health Scorecard:** 4-point rating (Value Prop Clarity, Conversion Velocity, Trust Density, Friction Resistance).
-- **Side-by-Side Competitor Matrix:** Compare 2 to 4 competitors simultaneously in a synchronized table.
+- **Side-by-Side Competitor Matrix:** Compare 2 to 4 competitors simultaneously in a synchronized table with search.
 - **Multi-Format Export:** 1-click export to **Markdown** (PRD/Notion format), **JSON**, **CSV spreadsheet**, and **Printable PDF**.
 
 ---
@@ -86,12 +88,12 @@ npm install
 npm run dev
 # → http://localhost:3000
 ```
-*Click on any of the 8 curated live benchmark chips (Linear, Stripe, Vercel, Notion, Figma, Supabase, Raycast, Airbnb) to explore live product design datasets instantly.*
+*Browse all 100 curated benchmarks categorized into DevTools & Infra (20), Productivity & Design (20), Frontier AI & ML (20), Fintech & B2B SaaS (20), and Consumer & Commerce (20).*
 
 ### 2. Free Live AI Analysis for ANY URL
 To analyze custom live URLs with Gemini:
-1. Open the app at `http://localhost:3000`.
-2. Click **"Add Free Gemini Key"** in the top navigation bar.
+1. Open the app (or visit the live deployment at [https://comp-landing-page-summarizer-nine.vercel.app](https://comp-landing-page-summarizer-nine.vercel.app)).
+2. Click **"Add API Key"** in the top navigation bar.
 3. Get a free API key in 10 seconds from [Google AI Studio](https://aistudio.google.com/app/apikey) (No credit card or GCP billing required).
 4. Enter any competitor URL and click **Analyze Page**.
 

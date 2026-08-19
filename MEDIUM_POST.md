@@ -68,7 +68,7 @@ When building personal side projects, the biggest friction is infrastructure cos
 I made an intentional architectural decision: **Zero Cloud Billing Required.**
 
 - **Free Google AI Studio Tier:** Instead of requiring paid Vertex AI credits, the system integrates directly with Google AI Studio's generous free-tier API keys. 
-- **Pre-Loaded Live Demo Suite:** I didn’t want visitors to hit a login wall or an empty state. When you land on the app, 8 authentic, deeply-analyzed competitor benchmarks (**Linear, Stripe, Vercel, Supabase, Notion, Figma, Raycast, and Airbnb**) are already pre-loaded with instant 0-second latency.
+- **100 Curated Real-World Benchmarks:** I didn’t want visitors to hit a login wall or an empty state. When you land on the app, **100 authentic, deeply-analyzed competitor benchmarks across 5 software categories** (DevTools, Productivity, Frontier AI, Fintech, and Consumer) are already pre-loaded with instant 0-second latency.
 - **Privacy-First (BYOK):** If you want to analyze any live website on the internet, you can paste your own free Gemini key in settings. It lives strictly inside your browser's `localStorage` and talks directly to Google’s API. No middleman server. No tracking.
 
 ---

@@ -159,7 +159,7 @@ export function ComparisonMatrix({
                       type="text"
                       value={addMenuSearch}
                       onChange={(e) => setAddMenuSearch(e.target.value)}
-                      placeholder="Search 50 benchmarks..."
+                      placeholder="Search 100 benchmarks..."
                       style={{
                         width: "100%",
                         paddingLeft: "26px",

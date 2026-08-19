@@ -31,9 +31,9 @@ The problem is not the lack of available information. The problem is the lack of
 
 Competitor Landing Page Summarizer is an agentic web application that helps product designers transform competitor landing pages into structured product-design insights.
 
-A user simply pastes a public landing page URL into the webapp (or selects from the 8 pre-loaded live benchmark datasets). The system retrieves the page content, analyzes it through an ADK/Gemini agent pipeline, and returns a structured summary that includes:
+A user simply pastes a public landing page URL into the webapp (or selects from the 100 pre-loaded live benchmark datasets across 5 software categories). The system retrieves the page content, analyzes it through an ADK/Gemini agent pipeline, and returns a structured summary that includes:
 
-- **Product / Brand & Category**
+- **Product / Brand, Category & Specs**
 - **Core Value Proposition**
 - **Likely Target Audience**
 - **Main Calls to Action (Primary, Secondary, Discovery)**
@@ -42,9 +42,9 @@ A user simply pastes a public landing page URL into the webapp (or selects from 
 - **UX Writing & Tone Observations**
 - **Potential Friction Points**
 - **Design Opportunities & Winning Angles**
-- **Product Designer Summary**
+- **Product Designer Takeaway**
 - **UX Health & Signal Scorecard (4-point rating)**
-- **Side-by-Side Competitor Comparison Matrix**
+- **Side-by-Side Competitor Comparison Matrix (with multi-competitor search)**
 
 The purpose of the solution is to eliminate repetitive benchmarking friction and empower designers to focus on interpretation, strategy, and decision-making.
 
@@ -57,7 +57,7 @@ This solution is intentionally designed to meet the build requirement through th
 The implementation follows this flexible multi-engine pattern:
 
 ```
-Mode 1 (Live Demo Suite): Immediate 0s load for 8 curated tech benchmarks (Linear, Stripe, Vercel, Supabase, Notion, Figma, Raycast, Airbnb)
+Mode 1 (100 Benchmarks Directory): Immediate 0s load for 100 curated tech benchmarks across 5 balanced categories (DevTools, Productivity, AI, Fintech, Consumer)
 Mode 2 (Free Live AI): Direct Web Extractor (Jina Reader / DOM) → Free Google AI Studio Gemini 2.5 Flash API (100% Zero GCP Billing)
 Mode 3 (ADK + MCP): Webapp UI → ADK API Server → ADK Agent → MCP Server Tool (load_web_page) → Structured JSON
 ```

@@ -125,50 +125,50 @@ const BENCHMARK_CATEGORIES = [
   {
     id: "ALL",
     label: "All Categories",
-    count: 50,
+    count: 100,
     icon: <LayoutGrid style={{ width: 14, height: 14 }} />,
-    description: "Full directory of 50 benchmarks",
-    sample: "Linear, Stripe, OpenAI, Notion, Airbnb...",
+    description: "Full directory of 100 curated benchmarks",
+    sample: "Linear, Stripe, OpenAI, Notion, Airbnb, Cursor...",
   },
   {
     id: "DevTools",
     label: "DevTools & Infra",
-    count: 14,
+    count: 20,
     icon: <Cpu style={{ width: 14, height: 14, color: "#2563EB" }} />,
     description: "Cloud, APIs, databases & CI/CD",
-    sample: "Linear, Stripe, Vercel, Supabase, GitHub, Docker...",
+    sample: "Linear, Stripe, Vercel, Supabase, GitHub, Docker, Postman...",
   },
   {
     id: "Productivity",
     label: "Productivity & Design",
-    count: 11,
+    count: 20,
     icon: <Palette style={{ width: 14, height: 14, color: "#7C3AED" }} />,
     description: "Workspaces, visual design & notes",
-    sample: "Notion, Figma, Raycast, Miro, Loom, Slack, Arc...",
+    sample: "Notion, Figma, Raycast, Miro, Loom, Slack, Arc, Pitch...",
   },
   {
     id: "AI",
     label: "Frontier AI & ML",
-    count: 10,
+    count: 20,
     icon: <Bot style={{ width: 14, height: 14, color: "#059669" }} />,
     description: "LLMs, video, voice & code editors",
-    sample: "OpenAI, Claude, Perplexity, Cursor, Midjourney...",
+    sample: "OpenAI, Claude, Perplexity, Cursor, Midjourney, ElevenLabs...",
   },
   {
     id: "Fintech",
     label: "Fintech & B2B SaaS",
-    count: 11,
+    count: 20,
     icon: <CreditCard style={{ width: 14, height: 14, color: "#D97706" }} />,
-    description: "Banking, spend, payroll & helpdesk",
-    sample: "Ramp, Brex, Mercury, Plaid, Deel, Gusto, Intercom...",
+    description: "Banking, spend, payroll & CRM",
+    sample: "Ramp, Brex, Mercury, Plaid, Deel, Gusto, Intercom, Webflow...",
   },
   {
     id: "Consumer",
     label: "Consumer & Commerce",
-    count: 4,
+    count: 20,
     icon: <Globe style={{ width: 14, height: 14, color: "#DC2626" }} />,
-    description: "Marketplaces, audio, mobility & stores",
-    sample: "Airbnb, Spotify, Uber, Shopify",
+    description: "Marketplaces, media & apps",
+    sample: "Airbnb, Spotify, Uber, Shopify, Netflix, Duolingo, Substack...",
   },
 ] as const;
 
@@ -505,7 +505,7 @@ ${result.designer_summary}`;
           <span style={{ color: "var(--border-subtle)" }}>/</span>
           <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: "6px" }}>
             <span className="live-status-dot" />
-            {hasApiKey ? "Gemini 2.5 Flash" : "50 Top Benchmarks"}
+            {hasApiKey ? "Gemini 2.5 Flash" : "100 Top Benchmarks"}
           </span>
         </div>
 
@@ -581,7 +581,7 @@ ${result.designer_summary}`;
           >
             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(37, 99, 235, 0.2)", border: "1px solid rgba(59, 130, 246, 0.3)", borderRadius: "9999px", padding: "2px 10px", width: "fit-content", marginBottom: "10px" }}>
               <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "#93C5FD", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}>
-                ⚡ 50 CURATED BENCHMARKS · 100% FREE AI TEARDOWNS
+                ⚡ 100 CURATED BENCHMARKS · 100% FREE AI TEARDOWNS
               </span>
             </div>
             <h1
@@ -605,7 +605,7 @@ ${result.designer_summary}`;
                 lineHeight: 1.5,
               }}
             >
-              Deconstruct value propositions, conversion funnels, trust signals, and UX friction points across 50 top tech products in seconds.
+              Deconstruct value propositions, conversion funnels, trust signals, and UX friction points across 100 top tech products in seconds.
             </p>
           </div>
         </div>
@@ -637,7 +637,7 @@ ${result.designer_summary}`;
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze(url)}
-              placeholder="Paste any live competitor URL (or select from 50 benchmarks below)..."
+              placeholder="Paste any live competitor URL (or select from 100 benchmarks below)..."
               disabled={loading}
               style={{
                 width: "100%",
@@ -693,7 +693,7 @@ ${result.designer_summary}`;
           </div>
         </div>
 
-        {/* 50 Curated Benchmarks Directory */}
+        {/* 100 Curated Benchmarks Directory */}
         <div style={{ marginBottom: "36px" }}>
           {/* Header & Quick Search */}
           <div
@@ -722,7 +722,7 @@ ${result.designer_summary}`;
                 type="text"
                 value={benchmarkSearch}
                 onChange={(e) => setBenchmarkSearch(e.target.value)}
-                placeholder="Search 50 products..."
+                placeholder="Search 100 products..."
                 style={{
                   width: "100%",
                   paddingLeft: "26px",
@@ -739,41 +739,33 @@ ${result.designer_summary}`;
             </div>
           </div>
 
-          {/* Interactive Category Cards Grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-              gap: "8px",
-              marginBottom: "14px",
-            }}
-          >
+          {/* Interactive Category Cards Grid (Responsive 6-col / 3-col / 2-col) */}
+          <div className="category-directory-grid">
             {BENCHMARK_CATEGORIES.map((cat) => {
               const isSelected = benchmarkGroup === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setBenchmarkGroup(cat.id as any)}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid",
-                    borderColor: isSelected ? "var(--accent-blue)" : "var(--border-subtle)",
-                    background: isSelected ? "var(--accent-blue-light)" : "var(--bg-surface)",
-                    boxShadow: isSelected ? "0 0 0 1px var(--accent-blue)" : "var(--shadow-card)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
+                  className={`category-card-btn ${isSelected ? `active-${cat.id}` : ""}`}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       {cat.icon}
-                      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: isSelected ? "var(--accent-blue)" : "var(--text-primary)" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: isSelected ? "var(--text-primary)" : "var(--text-primary)" }}>
                         {cat.label}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.6875rem", fontWeight: 700, color: isSelected ? "var(--accent-blue)" : "var(--text-muted)", background: isSelected ? "rgba(37,99,235,0.15)" : "var(--bg-track)", padding: "1px 5px", borderRadius: "4px" }}>
+                    <span
+                      style={{
+                        fontSize: "0.6875rem",
+                        fontWeight: 700,
+                        color: isSelected ? "var(--text-primary)" : "var(--text-muted)",
+                        background: isSelected ? "rgba(0,0,0,0.06)" : "var(--bg-track)",
+                        padding: "1px 5px",
+                        borderRadius: "4px",
+                      }}
+                    >
                       {cat.count}
                     </span>
                   </div>
@@ -785,15 +777,40 @@ ${result.designer_summary}`;
             })}
           </div>
 
+          {/* Active Filter Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", padding: "0 2px" }}>
+            <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.02em", textTransform: "uppercase" }}>
+              {benchmarkGroup === "ALL"
+                ? `All 100 Curated Benchmarks (${filteredBenchmarks.length} shown)`
+                : `${benchmarkGroup} Benchmarks (${filteredBenchmarks.length} of 20)`}
+            </span>
+            {benchmarkGroup !== "ALL" && (
+              <button
+                onClick={() => setBenchmarkGroup("ALL")}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "0.6875rem",
+                  color: "var(--accent-blue)",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  padding: 0,
+                }}
+              >
+                Reset to All 100 ↗
+              </button>
+            )}
+          </div>
+
           {/* Benchmark Pills Grid */}
           <div
             style={{
               display: "flex",
               flexWrap: "wrap",
               gap: "6px",
-              maxHeight: "160px",
+              maxHeight: "220px",
               overflowY: "auto",
-              padding: "4px",
+              padding: "8px",
               background: "var(--bg-subtle)",
               borderRadius: "var(--radius-md)",
               border: "1px solid var(--border-subtle)",
@@ -802,15 +819,25 @@ ${result.designer_summary}`;
             {filteredBenchmarks.map((demoUrl) => {
               const demo = LIVE_DEMO_DATASETS[demoUrl];
               const isSelected = result?.url === demoUrl;
+              const dotColor =
+                demo.group === "DevTools"
+                  ? "#2563EB"
+                  : demo.group === "Productivity"
+                  ? "#7C3AED"
+                  : demo.group === "AI"
+                  ? "#059669"
+                  : demo.group === "Fintech"
+                  ? "#D97706"
+                  : "#E11D48";
               return (
                 <button
                   key={demoUrl}
                   onClick={() => handleSelectDemo(demoUrl)}
                   className={`demo-chip ${isSelected ? "active" : ""}`}
-                  style={{ padding: "4px 10px", fontSize: "0.75rem" }}
-                  title={`${demo.product_brand} — ${demo.category}`}
+                  title={`${demo.product_brand} — ${demo.category} (${demo.group})`}
                 >
-                  {demo.product_brand}
+                  <span className="chip-dot" style={{ background: isSelected ? "#93C5FD" : dotColor }} />
+                  <span>{demo.product_brand}</span>
                 </button>
               );
             })}
@@ -1216,7 +1243,7 @@ ${result.designer_summary}`;
         >
           Fadly Uzzaki
         </a>
-        <span> · 50 Curated Benchmarks & Competitor Landing Page Intelligence</span>
+        <span> · 100 Curated Benchmarks & Competitor Landing Page Intelligence</span>
       </footer>
 
       {/* API Key Modal */}
