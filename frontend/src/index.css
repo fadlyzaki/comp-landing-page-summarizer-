@@ -214,9 +214,28 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ─── Responsive ─── */
+/* ─── Responsive & Print ─── */
 @media (max-width: 640px) {
   .input-brand {
     flex-direction: column !important;
+  }
+}
+
+@media print {
+  body {
+    background-color: #ffffff !important;
+  }
+  header, .input-brand, footer, button, .status-dot {
+    display: none !important;
+  }
+  .card-brand, .card-accent {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .card-accent h3, .card-accent p, .card-accent ul, .card-accent li {
+    color: #000000 !important;
   }
 }

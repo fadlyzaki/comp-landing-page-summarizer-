@@ -1,74 +1,76 @@
 # Engineering the Signal: Building an Agentic Competitor Landing Page Summarizer
 
 **[PRIVATE & CONFIDENTIAL]**
-*Moving from noisy browser tabs to structured design insights using Google ADK, MCP, and Gemini.*
+*Moving from noisy browser tabs to structured design insights using Google ADK, MCP, and Gemini 2.5 Flash.*
 
 As a product designer, one of the most tedious parts of early-stage discovery is competitive benchmarking. You open a dozen tabs, manually scan through landing pages, take fragmented notes, and then spend hours converting those observations into structured documents. 
 
 It’s a highly repetitive, inconsistent process. The problem isn't a lack of information—it’s the lack of a system to transform public web pages into **structured, design-relevant insights**. Unstructured competitor intelligence is just noise.
 
-To solve this, I built the **Competitor Landing Page Summarizer**. At its core, it's a web application where you simply paste a competitor's URL, and an AI agent instantly reads the page to generate a structured, highly-visual breakdown of their value proposition, target audience, call-to-action strategy, and design friction points. Under the hood, it's a full-stack, agentic intelligence pipeline that acts as a structured extraction engine for product design research. 
-
-Here is a look under the hood at how I engineered it using Google’s Agent Development Kit (ADK) and the Model Context Protocol (MCP).
+To solve this, I built the **Competitor Landing Page Summarizer**. At its core, it's a web application where you simply paste a competitor's URL, and an AI agent instantly reads the page to generate a structured, highly-visual breakdown of their value proposition, target audience, call-to-action strategy, trust signals, and design friction points. Under the hood, it's a full-stack, agentic intelligence pipeline that acts as a structured extraction engine for product design research.
 
 ---
 
 ## 🏗 The Architecture & Stack
 
-A robust agentic system is measured by its tool composability, model governance, and extraction fidelity. I wanted zero hallucination on structured outputs and deterministic web data extraction.
+A robust agentic system is measured by its tool composability, model governance, zero-cost accessibility, and extraction fidelity. I wanted zero hallucination on structured outputs, instant interactive demonstrations, and deterministic web data extraction.
 
-The resulting stack is lean and purpose-built:
-- **The Intelligence Layer:** `Google ADK` orchestrates the agentic loop.
+The resulting stack is lean, modern, and production-ready:
+- **The Intelligence Layer:** `Google ADK` + `Google Gemini 2.5 Flash` (with 100% Free-Tier Google AI Studio support and zero GCP billing requirements).
 - **The Protocol Layer:** `MCP (Model Context Protocol)` decouples the AI agent from web-fetching logic.
-- **The Model:** `Gemini 2.5 Flash` (via Vertex AI) for high-throughput, structured inference.
-- **The Scraper:** `requests` + `BeautifulSoup (lxml)` for deterministic DOM extraction.
-- **The Frontend:** React 19 + Vite 6 + TypeScript with TailwindCSS and Framer Motion for kinetic polish.
-- **The Edge:** `Google Cloud Run` for containerized, stateless, auto-scaling deployment.
+- **The Scraper:** `requests` + `BeautifulSoup (lxml)` for backend MCP, paired with high-performance `Jina Reader` (`r.jina.ai`) for client-side live extraction.
+- **The Benchmark Engine:** 8 pre-loaded live competitor datasets (**Linear, Stripe, Vercel, Supabase, Notion, Figma, Raycast, Airbnb**) for instant zero-latency benchmarking.
+- **The Frontend:** React 19 + Vite 6 + TypeScript with TailwindCSS, Lucide icons, and Motion React for kinetic polish.
+- **Comparison & Scoring:** Side-by-Side Competitor Comparison Matrix and 4-point UX Health Signal Scorecard.
 
 ---
 
-## ⚡ The Secret Sauce: ADK + MCP Integration
+## ⚡ The Secret Sauce: Flexible Multi-Engine Architecture
 
-At the core of the system is the interplay between Google ADK and MCP. The backend runs through the official ADK runtime (`adk api_server`) and hosts a dedicated `LlmAgent` named `competitor_summarizer`.
+The platform operates on three flexible execution modes to ensure zero-barrier usability:
 
-Instead of baking the web-scraping logic directly into the agent, I used MCP as the tool integration layer. I built a custom FastMCP server that exposes a webpage-loading tool (`load_web_page`). The ADK agent acts as an MCP client (using `McpToolset` with `StdioConnectionParams`), discovering and invoking the tool via stdio transport.
+1. **Curated Live Demo Suite (Instant & 100% Free):**
+   - 8 authentic, deeply-researched live benchmarks available on load.
+   - Includes side-by-side comparative teardowns, UX scores, and visual hierarchy breakdowns.
 
-**The Signal Flow:**
-1. **User Input:** A user pastes a competitor URL into the React frontend.
-2. **Session Creation:** The frontend communicates with the ADK API Server to create a session.
-3. **Agent Invocation:** The ADK agent (`competitor_summarizer` running Gemini) is invoked.
-4. **Tool Execution:** The agent calls the MCP `load_web_page` tool. The tool fetches the page, strips out the noise (scripts, styles, SVGs), and returns a clean, semantic DOM payload (title, headings, paragraphs, buttons).
-5. **Structured Synthesis:** The agent analyzes the content against product-design criteria and returns a strict JSON schema.
+2. **Free Live AI Engine (Zero GCP Credits Needed):**
+   - Anyone can input any live public URL using a free Google AI Studio API key.
+   - Clean DOM & semantic content is fetched on-the-fly and processed through Gemini 2.5 Flash with strict JSON schema enforcement.
+
+3. **Google ADK + MCP Pipeline:**
+   - The backend runs through the official ADK runtime (`adk api_server`) hosting an `LlmAgent` called `competitor_summarizer`.
+   - The agent acts as an MCP client using `McpToolset` with `StdioConnectionParams` to invoke the decoupled `load_web_page` FastMCP server.
 
 ---
 
-## 🎯 Not Just Another Summarizer
+## 🎯 Not Just Another Summarizer: Artifact-Grade Insights
 
 Most webpage summarizers are generic or optimized for SEO. This system is different because it is explicitly engineered for a **product designer's perspective**. 
 
-The agent’s system instruction enforces analysis through UX-specific lenses. When you feed it a URL, you don't just get a summary. You get a structured JSON response containing:
-- **Core Value Proposition**
-- **Likely Target Audience**
-- **Call-to-Action Strategy**
-- **Trust Signals**
-- **Information Hierarchy**
-- **UX Writing Observations**
-- **Friction Points & Design Opportunities**
-
-The frontend then renders these insights into a clean, animated card-based interface with one-click export to JSON or Markdown. 
+When analyzing a page, it structures insights across 9 key design dimensions:
+- **Core Value Proposition** (1-2 sentences on what is promised)
+- **Likely Target Audience** (Specific segment targeted)
+- **Call-to-Action Strategy** (Primary, secondary, and discovery paths)
+- **Trust Signals & Social Proof** (Proof density, logos, metrics, certifications)
+- **Information Hierarchy** (Top-to-bottom cognitive flow)
+- **UX Writing Observations** (Tone, microcopy, and emotional resonance)
+- **Potential Friction Points** (Cognitive overload, ambiguous copy, hidden pricing)
+- **Design Opportunities & Winning Angles** (Actionable gaps for competitors to win)
+- **Senior Designer Executive Takeaway** (Opinionated summary)
 
 ---
 
-## 🚀 Deployment on the Edge
+## 📊 Live Comparison & Multi-Format Export
 
-To ensure zero infrastructure maintenance overhead, both the frontend and backend are fully containerized using Docker and deployed to **Google Cloud Run**. 
-
-The backend runs the official `adk api_server` runtime without needing a custom FastAPI wrapper, while the frontend is built at image build-time and served via Vite preview. This allows the system to auto-scale seamlessly while leveraging native Google Cloud authentication for Vertex AI.
+Designers rarely evaluate a competitor in isolation. The application features:
+- **Side-by-Side Comparison Matrix:** Compare 2 to 4 competitors simultaneously in a synchronized table.
+- **UX Health & Signal Scorecard:** 4-point rating metrics (Value Prop Clarity, Conversion Velocity, Trust Density, Friction Resistance).
+- **Multi-Format Export:** 1-click export to **Markdown** (PRD/Notion format), **JSON**, **CSV spreadsheet**, and **Printable PDF report**.
 
 ---
 
 ## 💡 Final Thoughts
 
-By combining Google ADK's reasoning capabilities with MCP's decoupled tool integration, we can build tools that do more than just chat. We can build intelligent pipelines that turn unstructured noise into artifact-grade intelligence. 
+By combining Google ADK's reasoning capabilities with MCP's decoupled tool integration and free-tier Gemini availability, we can build tools that do more than just chat. We can build intelligent pipelines that turn unstructured noise into artifact-grade intelligence. 
 
 *A system is only as intelligent as the structure behind it. Architecture is survival.*

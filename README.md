@@ -4,9 +4,10 @@
 
 **[PRIVATE & CONFIDENTIAL]**
 
-![Python](https://img.shields.io/badge/python-3.11+-blue)
+![React](https://img.shields.io/badge/React-19.0-61DAFB?logo=react)
+![Gemini 2.5 Flash](https://img.shields.io/badge/Gemini%202.5%20Flash-Free%20Tier-4285F4?logo=google)
 ![Google ADK](https://img.shields.io/badge/Google%20ADK-1.0%2B-orange)
-![Cloud Run](https://img.shields.io/badge/deployed-Cloud%20Run-4285F4?logo=googlecloud)
+![Zero GCP Credits](https://img.shields.io/badge/Cost-100%25%20Free%20Tier-success)
 
 ---
 
@@ -14,131 +15,113 @@
 
 *“Unstructured competitor intelligence is noise. We don’t just scrape pages; we engineer an agentic pipeline where algorithmic extraction meets structured design intelligence.”*
 
-As a Product Manager, I've watched countless hours burn while teams conduct competitive benchmarking. We open a dozen tabs, manually scan landing pages, take fragmented notes, and then wrestle those observations into a structured format. It’s slow, repetitive, and inconsistent. 
+As a Product Designer & Manager, countles hours burn while teams conduct competitive benchmarking. We open a dozen tabs, manually scan landing pages, take fragmented notes, and then wrestle those observations into a structured format. It’s slow, repetitive, and inconsistent.
 
-The problem isn't a lack of information—it’s the lack of a system. 
+The problem isn't a lack of information—it’s the lack of a system.
 
-**The Competitor Landing Page Summarizer** solves this by transforming public web pages into structured, artifact-grade benchmarking datasets. We built a system that reduces cognitive load and manual extraction, freeing up the team to focus on what actually matters: strategy, interpretation, and product decisions. 
-
----
-
-## 🎨 The Design Perspective: Artifact-Grade Benchmarking
-
-Most webpage summarizers are generic or optimized for SEO. From a Product Design standpoint, that’s not actionable. We engineered this system to analyze pages through strict, UX-specific lenses. 
-
-When you feed the engine a URL, it doesn't just "summarize." It structures a JSON payload containing:
-- **Core Value Proposition:** What the product promises.
-- **Likely Target Audience:** Who it's designed for.
-- **Call-to-Action Strategy:** Primary and secondary conversion paths.
-- **Trust Signals:** How they build credibility.
-- **Information Hierarchy:** The flow of the page.
-- **UX Writing Observations:** Tone and microcopy patterns.
-- **Friction Points & Design Opportunities:** Where they fail, and where we can win.
-
-The frontend (built with React 19, TailwindCSS, and Framer Motion) renders these insights into an animated, card-based interface with one-click export to JSON or Markdown. It’s designed to be a seamless, polished tool that fits right into a designer's workflow.
+**The Competitor Landing Page Summarizer** transforms public web pages into structured, artifact-grade benchmarking datasets. It reduces cognitive load and manual extraction, freeing up the team to focus on what actually matters: strategy, interpretation, and product decisions.
 
 ---
 
-## 🏗 How I Built This (The Architecture Explained Humanly)
+## 🚀 100% Free-Tier & Production-Ready Architecture
 
-When building an AI agent to read websites, the biggest trap is tangling everything up. If you give the AI direct internet access, it might hallucinate structure or get confused by popups, ads, and CSS files. 
-
-To solve this, **I split the brain from the eyes.** 
-
-Here is the step-by-step of how the system actually works under the hood:
-
-1. **The Brain (Google ADK & Gemini 2.0):** I used Google’s Agent Development Kit (ADK) to create a focused "Agent" named `competitor_summarizer`. Its only job is to reason about design. Powered by Gemini 2.0 Flash via Vertex AI, I gave it a strict instruction: *“Only output data in this exact JSON structure, no matter what.”*
-2. **The Eyes (Model Context Protocol - MCP):** Instead of teaching the Brain how to scrape the web, I used MCP to give it a decoupled "tool." I built a separate mini-server with a single function: `load_web_page`. 
-3. **The Filter (`requests` + `BeautifulSoup`):** When the `load_web_page` tool runs, it grabs the website's HTML and aggressively strips out all the junk—no scripts, no styling, no hidden tracking pixels. It just extracts pure semantic content like headings, paragraphs, and buttons.
-4. **The Handshake:** The Brain asks the Eyes to read a URL. The Eyes return clean, junk-free text. The Brain then analyzes that text using our design criteria and outputs a perfect JSON file.
-5. **The Face (React & Vite):** Finally, I built a React 19 frontend that talks to the Brain, grabs that JSON, and animates it into beautiful, readable cards using Framer Motion. 
-
-By separating the scraping from the reasoning, the system becomes highly deterministic. It doesn't guess; it extracts and structures. 
-
-### ⚡ System Signal Flow
+To make the system immediately accessible to anyone with **zero Google Cloud credits and zero cloud billing required**, the platform operates on three flexible execution modes:
 
 ```mermaid
 flowchart TD
-    A["🧑‍💻 User"] -->|enters competitor URL| B["🌐 React Frontend"]
-    B -->|POST /apps/.../sessions/...| C["⚡ ADK API Server"]
-    C -->|creates session| D["📋 Session Created"]
-    D -->|POST /run with message| C
-    C -->|invokes agent| E["🤖 The Brain<br/>competitor_summarizer<br/>gemini-2.0-flash"]
-    E -->|calls MCP tool via stdio| F["👀 The Eyes<br/>MCP: load_web_page"]
-    F -->|HTTP GET with browser headers| G["🌍 Target Website"]
-    G -->|HTML response| F
-    F -->|structured DOM payload| E
-    E -->|analyzes with product-design criteria| H["📊 Structured JSON Response"]
-    H -->|returns to frontend| B
-    B -->|renders insight cards| I["✅ Analysis Result"]
+    User["🧑‍💻 User / Designer / Evaluator"] --> Input{"Select Workflow"}
+    
+    subgraph "Mode 1: Curated Live Demo Suite (Instant & 100% Free)"
+        Input -->|1-Click Demo| DemoData["⚡ 8 Real-World Benchmarks<br/>Linear · Stripe · Vercel · Supabase<br/>Notion · Figma · Raycast · Airbnb"]
+        DemoData --> Matrix["📊 Side-by-Side Comparison Matrix"]
+        DemoData --> VisualCard["🎴 Artifact-Grade UX Cards & Scores"]
+    end
+
+    subgraph "Mode 2: Free Live AI Engine (Zero GCP Credits Needed)"
+        Input -->|Enter Custom URL| CustomURL["🌐 Any Arbitrary URL"]
+        CustomURL --> FreeKey["🔑 Free Google AI Studio API Key"]
+        FreeKey --> Scraper["👀 Jina Reader / DOM Parser (r.jina.ai)"]
+        Scraper --> FreeGemini["🤖 Gemini 2.5 Flash (Free Tier REST)"]
+        FreeGemini --> VisualCard
+    end
+
+    subgraph "Mode 3: Google ADK + MCP Pipeline"
+        Input -->|Local or Cloud Server| ADKServer["⚡ Google ADK Backend (api_server)"]
+        ADKServer --> MCP["👀 MCP Tool (load_web_page)"]
+        MCP --> ADKAgent["🤖 ADK Agent (gemini-2.5-flash)"]
+        ADKAgent --> VisualCard
+    end
+
+    VisualCard --> Export["📦 Multi-Format Export: JSON · Markdown · CSV · PDF"]
 ```
 
 ---
 
-## 🚀 Deployment Protocol & CI/CD Pipeline
+## 🎨 Key Features & Design Intelligence
 
-To ensure zero infrastructure maintenance overhead, both the frontend and backend are fully containerized using Docker and deployed to **Google Cloud Run**.
+When you feed the engine a URL, it structures a comprehensive payload across 9 design dimensions:
+- **Core Value Proposition:** What the product promises and why it matters.
+- **Likely Target Audience:** Who the product is designed to convert.
+- **Call-to-Action Strategy:** Primary, secondary, and discovery conversion paths.
+- **Trust Signals & Social Proof:** Metrics, compliance badges, and enterprise logos.
+- **Information Hierarchy:** Flow and cognitive priority of content.
+- **UX Writing Observations:** Tone, clarity, and microcopy patterns.
+- **Potential Friction Points:** Where users encounter hesitation or ambiguity.
+- **Design Opportunities & Winning Angles:** Strategic gaps you can capitalize on.
+- **Product Designer Summary:** Opinionated executive takeaway from a senior designer.
+- **UX Health Scorecard:** 4-point rating (Value Prop Clarity, Conversion Velocity, Trust Density, Friction Resistance).
+- **Side-by-Side Competitor Matrix:** Compare 2 to 4 competitors simultaneously in a synchronized table.
+- **Multi-Format Export:** 1-click export to **Markdown** (PRD/Notion format), **JSON**, **CSV spreadsheet**, and **Printable PDF**.
 
-### Local Ignition
+---
 
-**Prerequisites:** Node.js ≥ 18 | Python ≥ 3.11 | Google Cloud SDK | GCP Project with Vertex AI enabled
+## ⚡ Quickstart (100% Free & Zero-Setup)
+
+### 1. Instant Live Demo (Frontend Only)
+You can run the web app immediately without any backend setup:
 
 ```bash
-# 1. Backend — provision and ignite
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-cp .env.example .env
-# Configure: GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, GOOGLE_GENAI_USE_VERTEXAI
-
-gcloud auth application-default login
-adk api_server agents --port 8080
-
-# 2. Frontend — provision and boot
 cd frontend
 npm install
 npm run dev
 # → http://localhost:3000
 ```
+*Click on any of the 8 curated live benchmark chips (Linear, Stripe, Vercel, Notion, Figma, Supabase, Raycast, Airbnb) to explore live product design datasets instantly.*
 
-### Production Environment (Google Cloud Run)
+### 2. Free Live AI Analysis for ANY URL
+To analyze custom live URLs with Gemini:
+1. Open the app at `http://localhost:3000`.
+2. Click **"Add Free Gemini Key"** in the top navigation bar.
+3. Get a free API key in 10 seconds from [Google AI Studio](https://aistudio.google.com/app/apikey) (No credit card or GCP billing required).
+4. Enter any competitor URL and click **Analyze Page**.
+
+### 3. Optional: Backend ADK + MCP Server
+If you wish to run the local Python ADK + MCP pipeline:
 
 ```bash
-# Backend
 cd backend
-gcloud run deploy competitor-summarizer-backend \
-  --source . \
-  --region us-central1 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=your-project-id,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=True" \
-  --allow-unauthenticated
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 
-# Frontend
-cd frontend
-gcloud run deploy competitor-summarizer-frontend \
-  --source . \
-  --region us-central1 \
-  --set-env-vars "VITE_ADK_API_BASE_URL=https://your-backend-url.run.app" \
-  --allow-unauthenticated
+# Set your free Gemini API key
+export GEMINI_API_KEY="your_free_key_from_ai_studio"
+
+# Start the ADK API server
+adk api_server agents --port 8080
 ```
 
 ---
 
-## ⚙️ Environment Variables
+## 🚢 Deployment Protocol
 
-### Backend (`backend/.env`)
-| Variable | Description | Example |
-|---|---|---|
-| `GOOGLE_CLOUD_PROJECT` | GCP project ID | `my-project-123` |
-| `GOOGLE_CLOUD_LOCATION` | GCP region | `us-central1` |
-| `GOOGLE_GENAI_USE_VERTEXAI` | Enable Vertex AI backend | `True` |
-
-### Frontend (`frontend/.env`)
-| Variable | Description | Example |
-|---|---|---|
-| `VITE_ADK_API_BASE_URL` | Backend Cloud Run URL (empty = localhost) | `https://backend-xyz.run.app` |
-| `VITE_ADK_APP_NAME` | Registered ADK agent name | `competitor_summarizer` |
+### Deploy to Vercel (Frontend Single-Click)
+The frontend is pre-configured for Vercel with automatic Vite build detection (`vercel.json`):
+```bash
+# Via Vercel CLI
+vercel
+```
+*Optional environment variable in Vercel project settings: `VITE_GEMINI_API_KEY` (sets a default free Gemini key for all visitors).*
 
 ---
 
