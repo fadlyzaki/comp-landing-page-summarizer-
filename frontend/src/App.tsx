@@ -61,7 +61,7 @@ type ResultSectionKey =
 interface SectionConfig {
   key: ResultSectionKey;
   label: string;
-  category: "all" | "strategy" | "ux" | "opportunities";
+  category: "strategy" | "ux" | "opportunities" | "summary";
   icon: React.ReactNode;
 }
 
@@ -117,7 +117,7 @@ const RESULT_SECTIONS: SectionConfig[] = [
   {
     key: "designer_summary",
     label: "Product Designer Takeaway",
-    category: "all",
+    category: "summary",
     icon: <Compass style={{ width: 16, height: 16, color: "#0F172A" }} />,
   },
 ];
@@ -156,7 +156,7 @@ export default function App() {
     }, 2500);
   };
 
-  // Keyboard shortcut listener (/ to focus input, Esc to close modals/matrix)
+  // Keyboard shortcuts (/ to focus input, Esc to close modals)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -216,7 +216,6 @@ export default function App() {
     setUrl(formattedUrl);
     setError(null);
 
-    // If pre-analyzed demo, load immediately
     if (LIVE_DEMO_DATASETS[formattedUrl]) {
       setResult(LIVE_DEMO_DATASETS[formattedUrl]);
       showToast(`Loaded ${LIVE_DEMO_DATASETS[formattedUrl].product_brand} benchmark`);
@@ -242,7 +241,6 @@ export default function App() {
           setComparisonList((prev) => [liveAnalysis, ...prev.slice(0, 3)]);
         }
       } else {
-        // Try local ADK backend if available
         setLoadingStep("Connecting to backend service...");
         try {
           const userId = "designer";
@@ -397,9 +395,12 @@ ${result.designer_summary}`;
     setShowMatrix(true);
   };
 
+  // Filter sections based on active category and search query
   const filteredSections = RESULT_SECTIONS.filter((section) => {
-    if (activeCategory !== "all" && section.category !== activeCategory && section.category !== "all") {
-      return false;
+    if (activeCategory !== "all") {
+      if (activeCategory === "strategy" && section.category !== "strategy") return false;
+      if (activeCategory === "ux" && section.category !== "ux") return false;
+      if (activeCategory === "opportunities" && section.category !== "opportunities") return false;
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -440,12 +441,8 @@ ${result.designer_summary}`;
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <button
             onClick={() => setShowMatrix(!showMatrix)}
-            className="btn-secondary"
-            style={{
-              padding: "5px 10px",
-              fontSize: "0.75rem",
-              background: showMatrix ? "var(--bg-subtle)" : undefined,
-            }}
+            className="btn-action-compare"
+            style={{ padding: "5px 10px", fontSize: "0.75rem" }}
           >
             <Columns3 style={{ width: 13, height: 13 }} />
             <span>Compare ({comparisonList.length})</span>
@@ -476,7 +473,7 @@ ${result.designer_summary}`;
         </div>
       </nav>
 
-      <main style={{ maxWidth: "860px", margin: "0 auto", padding: "48px 24px 80px" }}>
+      <main style={{ maxWidth: "880px", margin: "0 auto", padding: "48px 24px 80px" }}>
         {/* Header */}
         <header style={{ marginBottom: "32px" }}>
           <h1
@@ -587,7 +584,7 @@ ${result.designer_summary}`;
           </div>
         </div>
 
-        {/* Demo Chips */}
+        {/* Curated Benchmark Pills (Royal Blue Active) */}
         <div style={{ marginBottom: "36px" }}>
           <div
             style={{
@@ -599,7 +596,7 @@ ${result.designer_summary}`;
           >
             Curated Benchmarks:
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
             {DEMO_URLS.map((demoUrl) => {
               const demo = LIVE_DEMO_DATASETS[demoUrl];
               const isSelected = result?.url === demoUrl;
@@ -627,14 +624,14 @@ ${result.designer_summary}`;
                 marginBottom: "28px",
                 padding: "16px 20px",
                 borderRadius: "var(--radius-lg)",
-                background: "var(--status-red-bg)",
-                border: "1px solid var(--status-red-border)",
+                background: "#FEF2F2",
+                border: "1px solid #FEE2E2",
                 display: "flex",
                 alignItems: "flex-start",
                 gap: "12px",
               }}
             >
-              <AlertCircle style={{ width: 18, height: 18, color: "var(--status-red)", marginTop: 2, flexShrink: 0 }} />
+              <AlertCircle style={{ width: 18, height: 18, color: "#DC2626", marginTop: 2, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
                 <p style={{ margin: "0 0 10px", fontSize: "0.8125rem", color: "#991B1B", lineHeight: 1.5 }}>
                   {error}
@@ -680,28 +677,21 @@ ${result.designer_summary}`;
                   {loadingStep}
                 </span>
               </div>
-              {RESULT_SECTIONS.map((section, i) => {
-                const isFullWidth =
-                  section.key === "information_hierarchy" ||
-                  section.key === "design_opportunities" ||
-                  section.key === "designer_summary";
-                return (
-                  <div
-                    key={`skeleton-${i}`}
-                    className="skeleton-shimmer"
-                    style={{
-                      padding: "20px",
-                      gridColumn: isFullWidth ? "1 / -1" : undefined,
-                      minHeight: section.key === "designer_summary" ? "140px" : "120px",
-                    }}
-                  >
-                    <div className="skeleton-line" style={{ width: "80px", marginBottom: "14px" }} />
-                    <div className="skeleton-line" style={{ width: "60%" }} />
-                    <div className="skeleton-line" style={{ width: "90%" }} />
-                    <div className="skeleton-line" style={{ width: "70%" }} />
-                  </div>
-                );
-              })}
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  className="skeleton-shimmer"
+                  style={{
+                    padding: "20px",
+                    minHeight: "120px",
+                  }}
+                >
+                  <div className="skeleton-line" style={{ width: "80px", marginBottom: "14px" }} />
+                  <div className="skeleton-line" style={{ width: "60%" }} />
+                  <div className="skeleton-line" style={{ width: "90%" }} />
+                  <div className="skeleton-line" style={{ width: "70%" }} />
+                </div>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -758,10 +748,11 @@ ${result.designer_summary}`;
                       <span
                         style={{
                           fontSize: "0.75rem",
-                          color: "var(--text-muted)",
-                          background: "var(--bg-subtle)",
+                          color: "var(--text-secondary)",
+                          background: "var(--bg-track)",
                           padding: "2px 8px",
                           borderRadius: "4px",
+                          fontWeight: 500,
                         }}
                       >
                         {result.category}
@@ -787,29 +778,29 @@ ${result.designer_summary}`;
                   </a>
                 </div>
 
-                {/* Actions */}
+                {/* Distinct Action Buttons */}
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                  <button onClick={handleAddToComparison} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
+                  <button onClick={handleAddToComparison} className="btn-action-compare" title="Add to comparison matrix">
                     <Columns3 style={{ width: 13, height: 13 }} />
                     Compare
                   </button>
 
-                  <button onClick={handleCopyJson} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
-                    {copiedJson ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Braces style={{ width: 13, height: 13 }} />}
+                  <button onClick={handleCopyJson} className="btn-action-json" title="Copy raw JSON">
+                    {copiedJson ? <Check style={{ width: 13, height: 13, color: "var(--accent-amber)" }} /> : <Braces style={{ width: 13, height: 13 }} />}
                     {copiedJson ? "Copied" : "JSON"}
                   </button>
 
-                  <button onClick={handleCopyMarkdown} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
-                    {copiedMd ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Copy style={{ width: 13, height: 13 }} />}
+                  <button onClick={handleCopyMarkdown} className="btn-action-markdown" title="Copy Markdown summary">
+                    {copiedMd ? <Check style={{ width: 13, height: 13, color: "var(--accent-emerald)" }} /> : <Copy style={{ width: 13, height: 13 }} />}
                     {copiedMd ? "Copied" : "Markdown"}
                   </button>
 
-                  <button onClick={handleExportCsv} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
-                    {copiedCsv ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Download style={{ width: 13, height: 13 }} />}
+                  <button onClick={handleExportCsv} className="btn-action-csv" title="Download CSV spreadsheet">
+                    {copiedCsv ? <Check style={{ width: 13, height: 13, color: "var(--accent-blue)" }} /> : <Download style={{ width: 13, height: 13 }} />}
                     {copiedCsv ? "Exported" : "CSV"}
                   </button>
 
-                  <button onClick={() => window.print()} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }} title="Print / PDF">
+                  <button onClick={() => window.print()} className="btn-secondary" style={{ padding: "5px 10px", fontSize: "0.75rem" }} title="Print / PDF">
                     <Printer style={{ width: 13, height: 13 }} />
                   </button>
                 </div>
@@ -824,13 +815,13 @@ ${result.designer_summary}`;
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  marginBottom: "16px",
+                  marginBottom: "18px",
                   flexWrap: "wrap",
                   gap: "10px",
                 }}
               >
-                {/* Category Filter Tabs */}
-                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                {/* Segmented Control Category Tabs */}
+                <div className="segmented-tab-track">
                   {(
                     [
                       { id: "all", label: "All Insights" },
@@ -842,18 +833,7 @@ ${result.designer_summary}`;
                     <button
                       key={tab.id}
                       onClick={() => setActiveCategory(tab.id)}
-                      style={{
-                        padding: "5px 10px",
-                        borderRadius: "var(--radius-sm)",
-                        border: "1px solid",
-                        borderColor: activeCategory === tab.id ? "#0F172A" : "var(--border-subtle)",
-                        background: activeCategory === tab.id ? "#0F172A" : "var(--bg-surface)",
-                        color: activeCategory === tab.id ? "#FFFFFF" : "var(--text-secondary)",
-                        fontSize: "0.75rem",
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
+                      className={`segmented-tab ${activeCategory === tab.id ? "active" : ""}`}
                     >
                       {tab.label}
                     </button>
@@ -882,9 +862,9 @@ ${result.designer_summary}`;
                       width: "100%",
                       paddingLeft: "28px",
                       paddingRight: "8px",
-                      paddingTop: "5px",
-                      paddingBottom: "5px",
-                      borderRadius: "var(--radius-sm)",
+                      paddingTop: "6px",
+                      paddingBottom: "6px",
+                      borderRadius: "var(--radius-md)",
                       border: "1px solid var(--border-card)",
                       background: "var(--bg-surface)",
                       fontSize: "0.75rem",
@@ -894,22 +874,21 @@ ${result.designer_summary}`;
                 </div>
               </div>
 
-              {/* Cards Grid */}
+              {/* Cards Grid: Perfectly Balanced */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                  gap: "14px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                  gap: "16px",
                 }}
               >
                 {filteredSections.map((section, i) => {
-                  const isOpportunities = section.key === "design_opportunities";
                   const isSummary = section.key === "designer_summary";
                   const isFriction = section.key === "friction_points";
-                  const isFullWidth =
-                    section.key === "information_hierarchy" ||
-                    isOpportunities ||
-                    isSummary;
+                  const isOpportunities = section.key === "design_opportunities";
+
+                  // In "All" view, summary spans full width at the bottom as the conclusion
+                  const isFullSpan = activeCategory === "all" && isSummary;
                   const value = result[section.key];
 
                   return (
@@ -921,7 +900,9 @@ ${result.designer_summary}`;
                       className="clean-card"
                       style={{
                         padding: "20px",
-                        gridColumn: isFullWidth ? "1 / -1" : undefined,
+                        gridColumn: isFullSpan ? "1 / -1" : undefined,
+                        display: "flex",
+                        flexDirection: "column",
                         ...(isSummary
                           ? {
                               background: "var(--bg-subtle)",
@@ -930,7 +911,7 @@ ${result.designer_summary}`;
                           : {}),
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
                         {section.icon}
                         <h3
                           style={{
@@ -945,35 +926,37 @@ ${result.designer_summary}`;
                         </h3>
                       </div>
 
-                      {Array.isArray(value) ? (
-                        <ul
-                          style={{
-                            margin: 0,
-                            paddingLeft: "16px",
-                            fontSize: "0.8125rem",
-                            lineHeight: 1.6,
-                            color: "var(--text-secondary)",
-                          }}
-                        >
-                          {value.map((item, j) => (
-                            <li key={j} style={{ marginBottom: "4px" }}>
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: "0.8125rem",
-                            lineHeight: 1.6,
-                            color: isSummary ? "var(--text-primary)" : "var(--text-secondary)",
-                            fontWeight: isSummary ? 500 : 400,
-                          }}
-                        >
-                          {String(value || "")}
-                        </p>
-                      )}
+                      <div style={{ flex: 1 }}>
+                        {Array.isArray(value) ? (
+                          <ul
+                            style={{
+                              margin: 0,
+                              paddingLeft: "18px",
+                              fontSize: "0.8125rem",
+                              lineHeight: 1.6,
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            {value.map((item, j) => (
+                              <li key={j} style={{ marginBottom: "5px" }}>
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: "0.8125rem",
+                              lineHeight: 1.6,
+                              color: isSummary ? "var(--text-primary)" : "var(--text-secondary)",
+                              fontWeight: isSummary ? 500 : 400,
+                            }}
+                          >
+                            {String(value || "")}
+                          </p>
+                        )}
+                      </div>
                     </motion.div>
                   );
                 })}
