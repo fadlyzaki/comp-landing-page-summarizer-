@@ -44,7 +44,6 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
   });
 
   if (!res.ok) {
-    // Fallback test on gemini-1.5-flash if 2.5-flash has specific region flags
     const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
     const fallbackRes = await fetch(fallbackUrl, {
       method: "POST",
@@ -56,7 +55,7 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
     });
     if (!fallbackRes.ok) {
       const errText = await fallbackRes.text().catch(() => "");
-      throw new Error(`Invalid API key or request error (${fallbackRes.status}): ${errText}`);
+      throw new Error(`API key verification failed (${fallbackRes.status}): ${errText}`);
     }
     return true;
   }
@@ -64,12 +63,12 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
 }
 
 /**
- * Fetches page content using the free Jina Reader API or CORS fallback
+ * Fetches page content using Jina Reader or CORS fallback
  */
 export async function fetchLiveWebPageContent(targetUrl: string): Promise<string> {
   const cleanUrl = targetUrl.trim();
 
-  // Try Jina Reader free service (returns structured markdown directly, no key needed)
+  // Try Jina Reader
   try {
     const jinaUrl = `https://r.jina.ai/${cleanUrl}`;
     const controller = new AbortController();
@@ -87,14 +86,14 @@ export async function fetchLiveWebPageContent(targetUrl: string): Promise<string
     if (res.ok) {
       const text = await res.text();
       if (text && text.trim().length > 100) {
-        return text.slice(0, 20000); // Truncate for optimal context window
+        return text.slice(0, 20000);
       }
     }
   } catch (err) {
-    console.warn("Jina Reader fetch failed, trying CORS proxy fallback...", err);
+    console.warn("Direct Jina fetch failed, attempting fallback...", err);
   }
 
-  // Fallback 1: allorigins raw proxy
+  // Fallback: allorigins proxy
   try {
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanUrl)}`;
     const controller = new AbortController();
@@ -114,8 +113,7 @@ export async function fetchLiveWebPageContent(targetUrl: string): Promise<string
     console.warn("Proxy fetch failed:", err);
   }
 
-  // If both fail, return a fallback text prompt indicating we will analyze based on URL domain info
-  return `Target URL: ${cleanUrl}. Note: direct scraping was blocked or rate-limited. Please analyze based on known public brand positioning, domain name, and standard landing page patterns for ${cleanUrl}.`;
+  return `Target URL: ${cleanUrl}. Direct page fetch was limited. Please analyze based on public brand presence and standard product design patterns for ${cleanUrl}.`;
 }
 
 function extractTextFromHtml(html: string): string {
@@ -123,7 +121,6 @@ function extractTextFromHtml(html: string): string {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
 
-    // Remove noise
     const noisySelectors = ["script", "style", "noscript", "svg", "iframe", "nav", "footer"];
     noisySelectors.forEach((sel) => {
       doc.querySelectorAll(sel).forEach((el) => el.remove());
@@ -152,39 +149,37 @@ function extractTextFromHtml(html: string): string {
 }
 
 const SYSTEM_PROMPT = `\
-You are an elite Senior Product Designer and Competitive Intelligence Architect performing in-depth landing page benchmarking.
+You are an experienced Senior Product Designer and UX Researcher performing competitor landing page benchmarking.
 
 Your task is to analyze the extracted webpage content and return a structured product-design analysis in strict JSON format.
 
-JSON Structure:
+JSON Schema:
 {
-  "url": "<the exact analyzed URL>",
-  "product_brand": "<Product or company brand name>",
-  "tagline": "<Hero tagline or primary headline, 1 concise sentence>",
-  "category": "<Product category e.g. Fintech / Payments, Developer Cloud, etc.>",
-  "logo_emoji": "<1 fitting emoji symbol for the brand>",
-  "core_value_proposition": "<What the product promises and why it matters, 1-2 sentences>",
-  "target_audience": "<Who this page is specifically designed to convert>",
-  "cta_strategy": ["<Primary CTA>", "<Secondary CTA>", "<Tertiary/Discovery CTA>"],
-  "information_hierarchy": "<Detailed breakdown of how content flows from top to bottom>",
-  "trust_signals": ["<Signal 1 (e.g. customer logos)>", "<Signal 2 (e.g. metrics)>", "<Signal 3 (e.g. compliance/security)>"],
-  "ux_writing_notes": "<Observations on tone, clarity, microcopy, and emotional resonance>",
+  "url": "<exact analyzed URL>",
+  "product_brand": "<brand or product name>",
+  "tagline": "<hero tagline or headline, 1 sentence>",
+  "category": "<product category, e.g. Developer Tools, Fintech, Workflow Automation>",
+  "core_value_proposition": "<what the product promises, 1-2 clear sentences>",
+  "target_audience": "<who the page is designed for>",
+  "cta_strategy": ["<Primary CTA>", "<Secondary CTA>", "<Discovery path CTA>"],
+  "information_hierarchy": "<flow and priority of content on the page>",
+  "trust_signals": ["<Signal 1 (logos/case studies)>", "<Signal 2 (metrics/uptime)>", "<Signal 3 (compliance/security)>"],
+  "ux_writing_notes": "<observations on tone, clarity, and microcopy>",
   "friction_points": ["<Friction point 1>", "<Friction point 2>", "<Friction point 3>"],
-  "design_opportunities": ["<Actionable design opportunity 1>", "<Opportunity 2>", "<Opportunity 3>"],
-  "designer_summary": "<Opinionated, high-signal takeaway from a Senior Product Designer>",
-  "scores": {
-    "valuePropClarity": <number 70-100 based on how clearly the core value is communicated>,
-    "conversionVelocity": <number 70-100 based on how friction-free the primary CTA path is>,
-    "trustDensity": <number 70-100 based on volume and authority of social proof/metrics>,
-    "frictionResistance": <number 70-100 based on how well the page minimizes cognitive overload>
+  "design_opportunities": ["<Design opportunity 1>", "<Opportunity 2>", "<Opportunity 3>"],
+  "designer_summary": "<opinionated, actionable summary from a senior product designer>",
+  "specs": {
+    "primary_segment": "<e.g. Early-stage Engineering Teams>",
+    "monetization_model": "<e.g. Freemium / Per-Seat SaaS>",
+    "conversion_path": "<e.g. Self-serve Instant Signup>",
+    "design_signature": "<e.g. Dark Mode / Keyboard Shortcuts>"
   }
 }
 
 STRICT RULES:
-- Output ONLY valid, parsable JSON. No markdown backticks, no markdown fences, no preamble, no commentary.
-- Every array must contain between 2 and 5 specific, high-quality bullet points.
-- Ground your analysis in the provided webpage text content.
-- Be opinionated, actionable, and specific to THIS product. Avoid generic boilerplate.
+- Return ONLY the raw JSON object. Do NOT wrap in markdown fences (no \`\`\`json).
+- Every array must contain between 2 and 4 specific, actionable items.
+- Ground your analysis strictly in the provided text. Avoid generic boilerplate.
 `;
 
 /**
@@ -196,15 +191,12 @@ export async function analyzeWithGeminiFree(
 ): Promise<AnalysisResult> {
   const cleanKey = apiKey.trim();
   if (!cleanKey) {
-    throw new Error("Gemini API key is required. Please add your free key in Settings.");
+    throw new Error("Gemini API key is required. Please configure your key in Settings.");
   }
 
-  // 1. Fetch live page text
   const pageContent = await fetchLiveWebPageContent(targetUrl);
+  const prompt = `Analyze this competitor landing page:\n\nURL: ${targetUrl}\n\nPAGE CONTENT EXTRACT:\n${pageContent}\n\nReturn ONLY the structured JSON response.`;
 
-  const prompt = `Analyze this competitor landing page:\n\nURL: ${targetUrl}\n\nPAGE CONTENT EXTRACT:\n${pageContent}\n\nReturn ONLY the structured JSON response as instructed.`;
-
-  // 2. Call Gemini API
   const model = "gemini-2.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
 
@@ -223,7 +215,6 @@ export async function analyzeWithGeminiFree(
     }),
   });
 
-  // Fallback to gemini-1.5-flash if model name differs
   if (!res.ok) {
     const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanKey}`;
     res = await fetch(fallbackUrl, {
@@ -244,17 +235,16 @@ export async function analyzeWithGeminiFree(
 
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
-    throw new Error(`Gemini API error (${res.status}): ${errText}`);
+    throw new Error(`Gemini API request failed (${res.status}): ${errText}`);
   }
 
   const data = await res.json();
   const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!rawText) {
-    throw new Error("Gemini produced an empty response. Please try again.");
+    throw new Error("The model produced an empty response. Please try again.");
   }
 
-  // 3. Clean and parse JSON
   let cleaned = rawText.trim()
     .replace(/^```(?:json)?\s*\n?/i, "")
     .replace(/\n?```\s*$/i, "")
@@ -272,33 +262,31 @@ export async function analyzeWithGeminiFree(
   try {
     parsed = JSON.parse(cleaned);
   } catch (err) {
-    console.error("JSON parse error on text:", rawText);
-    throw new Error(`Failed to parse AI output into JSON: ${err}`);
+    console.error("JSON parse error:", rawText);
+    throw new Error(`Could not parse analysis output as JSON: ${err}`);
   }
 
-  // Ensure default structure
   const result: AnalysisResult = {
     url: parsed.url || targetUrl,
-    product_brand: parsed.product_brand || "Analyzed Competitor",
+    product_brand: parsed.product_brand || "Analyzed Product",
     tagline: parsed.tagline || "",
     category: parsed.category || "Web Application",
-    logo_emoji: parsed.logo_emoji || "🌐",
-    core_value_proposition: parsed.core_value_proposition || "Value proposition extracted from page content.",
-    target_audience: parsed.target_audience || "Modern digital consumers and professionals.",
+    core_value_proposition: parsed.core_value_proposition || "Extracted value proposition.",
+    target_audience: parsed.target_audience || "Target users and teams.",
     cta_strategy: Array.isArray(parsed.cta_strategy) ? parsed.cta_strategy : [String(parsed.cta_strategy || "Get Started")],
-    information_hierarchy: parsed.information_hierarchy || "Structured hero to footer workflow.",
-    trust_signals: Array.isArray(parsed.trust_signals) ? parsed.trust_signals : [String(parsed.trust_signals || "Brand credibility markers")],
-    ux_writing_notes: parsed.ux_writing_notes || "Professional, direct copywriting.",
-    friction_points: Array.isArray(parsed.friction_points) ? parsed.friction_points : [String(parsed.friction_points || "Initial discovery curve")],
-    design_opportunities: Array.isArray(parsed.design_opportunities) ? parsed.design_opportunities : [String(parsed.design_opportunities || "Optimize onboarding flow")],
-    designer_summary: parsed.designer_summary || "Insightful competitive breakdown.",
-    scores: parsed.scores || {
-      valuePropClarity: 90,
-      conversionVelocity: 88,
-      trustDensity: 89,
-      frictionResistance: 87,
+    information_hierarchy: parsed.information_hierarchy || "Structured content flow.",
+    trust_signals: Array.isArray(parsed.trust_signals) ? parsed.trust_signals : [String(parsed.trust_signals || "Social proof markers")],
+    ux_writing_notes: parsed.ux_writing_notes || "Copywriting observations.",
+    friction_points: Array.isArray(parsed.friction_points) ? parsed.friction_points : [String(parsed.friction_points || "Initial learning curve")],
+    design_opportunities: Array.isArray(parsed.design_opportunities) ? parsed.design_opportunities : [String(parsed.design_opportunities || "Optimize conversion path")],
+    designer_summary: parsed.designer_summary || "Competitive design summary.",
+    specs: parsed.specs || {
+      primary_segment: "Digital Teams",
+      monetization_model: "SaaS",
+      conversion_path: "Self-Serve Signup",
+      design_signature: "Modern Web",
     },
-    analyzed_at: new Date().toISOString().split("T")[0] + " (Live AI Analysis)",
+    analyzed_at: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
     is_live_demo: false,
   };
 

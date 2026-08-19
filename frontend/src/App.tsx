@@ -11,7 +11,6 @@ import {
   Check,
   Link as LinkIcon,
   AlertCircle,
-  Sparkles,
   Braces,
   Download,
   Key,
@@ -19,7 +18,6 @@ import {
   Search,
   ExternalLink,
   Printer,
-  Compass,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -31,7 +29,7 @@ import {
   getStoredGeminiKey,
   analyzeWithGeminiFree,
 } from "./lib/geminiAnalyzer";
-import { ScorecardWidget } from "./components/ScorecardWidget";
+import { ProductSpecsBar } from "./components/ProductSpecsBar";
 import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ComparisonMatrix } from "./components/ComparisonMatrix";
 
@@ -54,20 +52,19 @@ type ResultSectionKey =
 interface SectionConfig {
   key: ResultSectionKey;
   label: string;
-  tag: string;
   category: "all" | "strategy" | "ux" | "opportunities";
 }
 
 const RESULT_SECTIONS: SectionConfig[] = [
-  { key: "core_value_proposition", label: "Core Value Proposition", tag: "VALUE_PROP", category: "strategy" },
-  { key: "target_audience", label: "Likely Target Audience", tag: "AUDIENCE", category: "strategy" },
-  { key: "cta_strategy", label: "Main Calls to Action", tag: "CTA", category: "strategy" },
-  { key: "trust_signals", label: "Trust Signals & Social Proof", tag: "TRUST", category: "strategy" },
-  { key: "information_hierarchy", label: "Information Hierarchy", tag: "HIERARCHY", category: "ux" },
-  { key: "ux_writing_notes", label: "UX Writing & Tone Observations", tag: "UX_COPY", category: "ux" },
-  { key: "friction_points", label: "Potential Friction Points", tag: "FRICTION", category: "opportunities" },
-  { key: "design_opportunities", label: "Design Opportunities & Winning Angles", tag: "OPPORTUNITIES", category: "opportunities" },
-  { key: "designer_summary", label: "Product Designer Takeaway", tag: "SUMMARY", category: "all" },
+  { key: "core_value_proposition", label: "Core Value Proposition", category: "strategy" },
+  { key: "target_audience", label: "Likely Target Audience", category: "strategy" },
+  { key: "cta_strategy", label: "Calls to Action & Conversion Paths", category: "strategy" },
+  { key: "trust_signals", label: "Trust Signals & Social Proof", category: "strategy" },
+  { key: "information_hierarchy", label: "Information Hierarchy & Page Flow", category: "ux" },
+  { key: "ux_writing_notes", label: "UX Writing & Tone Observations", category: "ux" },
+  { key: "friction_points", label: "Potential Friction Points", category: "opportunities" },
+  { key: "design_opportunities", label: "Design Opportunities & Strategic Gaps", category: "opportunities" },
+  { key: "designer_summary", label: "Product Designer Takeaway", category: "all" },
 ];
 
 function generateId(): string {
@@ -77,7 +74,7 @@ function generateId(): string {
 export default function App() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState("Initializing analysis pipeline...");
+  const [loadingStep, setLoadingStep] = useState("Analyzing landing page...");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "strategy" | "ux" | "opportunities">("all");
@@ -94,19 +91,17 @@ export default function App() {
   const [copiedJson, setCopiedJson] = useState(false);
   const [copiedCsv, setCopiedCsv] = useState(false);
 
-  // Initialize key status and initial demo
+  // Initialize key status and initial benchmark
   useEffect(() => {
     const key = getStoredGeminiKey();
     setHasApiKey(Boolean(key && key.trim()));
 
-    // Pre-populate comparison list with 3 default demos for instant comparison exploration
     setComparisonList([
       LIVE_DEMO_DATASETS["https://linear.app"],
       LIVE_DEMO_DATASETS["https://stripe.com"],
       LIVE_DEMO_DATASETS["https://vercel.com"],
     ]);
 
-    // Load initial Linear demo so visitors have instant rich data
     setResult(LIVE_DEMO_DATASETS["https://linear.app"]);
     setUrl("https://linear.app");
   }, []);
@@ -135,13 +130,12 @@ export default function App() {
     setUrl(formattedUrl);
     setError(null);
 
-    // 1. Check if this is one of our pre-analyzed live demos for instant zero-latency loading
+    // If pre-analyzed demo, load immediately
     if (LIVE_DEMO_DATASETS[formattedUrl]) {
       setResult(LIVE_DEMO_DATASETS[formattedUrl]);
       return;
     }
 
-    // 2. If it's a new custom URL, analyze with available engine
     setLoading(true);
     setResult(null);
 
@@ -149,35 +143,31 @@ export default function App() {
 
     try {
       if (apiKey) {
-        // Run Free Live Gemini Engine
-        setLoadingStep("1/2 Fetching live webpage DOM & semantic content...");
-        await new Promise((r) => setTimeout(r, 400));
-        setLoadingStep("2/2 Gemini 2.5 Flash extracting product design insights...");
+        setLoadingStep("Fetching page content...");
+        await new Promise((r) => setTimeout(r, 300));
+        setLoadingStep("Extracting product design insights...");
 
         const liveAnalysis = await analyzeWithGeminiFree(formattedUrl, apiKey);
         setResult(liveAnalysis);
 
-        // Also add to comparison list if not present
         if (!comparisonList.some((c) => c.url === liveAnalysis.url)) {
           setComparisonList((prev) => [liveAnalysis, ...prev.slice(0, 3)]);
         }
       } else {
-        // Try ADK Backend if available, else prompt for Free Key or Demo
-        setLoadingStep("Connecting to ADK API server...");
+        // Try local ADK backend if available
+        setLoadingStep("Connecting to backend service...");
         try {
           const userId = "designer";
           const sessionId = generateId();
 
-          // Create ADK session
           const sessionRes = await fetch(`${ADK_BASE_URL}/apps/${ADK_APP_NAME}/users/${userId}/sessions/${sessionId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ state: {} }),
           });
 
-          if (!sessionRes.ok) throw new Error("ADK server not reachable");
+          if (!sessionRes.ok) throw new Error("Backend unavailable");
 
-          // Run ADK Agent
           const runRes = await fetch(`${ADK_BASE_URL}/run`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -190,7 +180,6 @@ export default function App() {
           });
 
           const data = await runRes.json();
-          // parse ADK output
           const events = Array.isArray(data) ? data : [data];
           let rawText = "";
           for (let i = events.length - 1; i >= 0; i--) {
@@ -205,26 +194,30 @@ export default function App() {
             }
           }
 
-          if (!rawText) throw new Error("ADK produced no text output");
+          if (!rawText) throw new Error("No response generated");
           const cleaned = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
           const parsed = JSON.parse(cleaned);
           setResult({
             ...parsed,
-            scores: { valuePropClarity: 92, conversionVelocity: 90, trustDensity: 91, frictionResistance: 88 },
-            analyzed_at: new Date().toISOString().split("T")[0] + " (ADK Agent)",
+            specs: {
+              primary_segment: "Target Audience",
+              monetization_model: "SaaS",
+              conversion_path: "Self-Serve",
+              design_signature: "Web Interface",
+            },
+            analyzed_at: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
             is_live_demo: false,
           });
         } catch {
-          // If ADK is not running and no API key is provided, offer friendly setup
           setIsApiKeyModalOpen(true);
           throw new Error(
-            "To analyze custom live URLs outside the pre-loaded live demos, please enter a 100% Free Gemini API key in Engine Settings (Zero GCP credits required)."
+            "To analyze arbitrary live URLs, please add a free Gemini API key in Settings (No credit card or cloud credits required)."
           );
         }
       }
     } catch (err: any) {
       console.error("Analysis error:", err);
-      setError(err.message || "Failed to analyze landing page. Please verify URL or check API settings.");
+      setError(err.message || "Could not analyze the landing page. Please verify the URL or configure your API key.");
     } finally {
       setLoading(false);
     }
@@ -232,9 +225,9 @@ export default function App() {
 
   const handleCopyMarkdown = () => {
     if (!result) return;
-    const md = `# ${result.product_brand} — Competitor Design Intelligence
+    const md = `# ${result.product_brand} — Competitor Design Analysis
 **URL:** ${result.url}
-**Analyzed:** ${result.analyzed_at || "Recent"}
+**Category:** ${result.category || "Web Application"}
 
 ## Core Value Proposition
 ${result.core_value_proposition}
@@ -242,25 +235,25 @@ ${result.core_value_proposition}
 ## Likely Target Audience
 ${result.target_audience}
 
-## Main Calls to Action
+## Calls to Action
 ${Array.isArray(result.cta_strategy) ? result.cta_strategy.map((c) => `- ${c}`).join("\n") : result.cta_strategy}
 
 ## Information Hierarchy
 ${result.information_hierarchy}
 
-## Trust Signals & Social Proof
+## Trust Signals
 ${Array.isArray(result.trust_signals) ? result.trust_signals.map((t) => `- ${t}`).join("\n") : result.trust_signals}
 
-## UX Writing & Tone Observations
+## UX Writing Observations
 ${result.ux_writing_notes}
 
 ## Potential Friction Points
 ${Array.isArray(result.friction_points) ? result.friction_points.map((f) => `- ${f}`).join("\n") : result.friction_points}
 
-## Design Opportunities & Winning Angles
+## Design Opportunities
 ${Array.isArray(result.design_opportunities) ? result.design_opportunities.map((o) => `- ${o}`).join("\n") : result.design_opportunities}
 
-## Product Designer Summary
+## Designer Summary
 ${result.designer_summary}`;
 
     navigator.clipboard.writeText(md);
@@ -278,10 +271,11 @@ ${result.designer_summary}`;
   const handleExportCsv = () => {
     if (!result) return;
     const escapeCsv = (str: string) => `"${(str || "").replace(/"/g, '""')}"`;
-    const headers = ["Section", "Detail"];
+    const headers = ["Dimension", "Details"];
     const rows = [
       ["Product Brand", result.product_brand],
       ["URL", result.url],
+      ["Category", result.category || ""],
       ["Core Value Proposition", result.core_value_proposition],
       ["Target Audience", result.target_audience],
       ["CTA Strategy", Array.isArray(result.cta_strategy) ? result.cta_strategy.join("; ") : result.cta_strategy],
@@ -297,7 +291,7 @@ ${result.designer_summary}`;
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `${result.product_brand.toLowerCase()}-design-summary.csv`;
+    link.download = `${result.product_brand.toLowerCase()}-benchmark.csv`;
     link.click();
 
     setCopiedCsv(true);
@@ -312,7 +306,6 @@ ${result.designer_summary}`;
     setShowMatrix(true);
   };
 
-  // Filter sections by search and category
   const filteredSections = RESULT_SECTIONS.filter((section) => {
     if (activeCategory !== "all" && section.category !== activeCategory && section.category !== "all") {
       return false;
@@ -327,77 +320,53 @@ ${result.designer_summary}`;
   });
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
-      {/* Top Status & Navigation Bar */}
-      <div
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
+      {/* Top Navigation */}
+      <nav
         style={{
           borderBottom: "1px solid var(--border-subtle)",
-          padding: "10px 24px",
+          padding: "12px 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.6875rem",
-          color: "var(--text-muted)",
-          letterSpacing: "0.04em",
-          background: "var(--bg-card)",
+          background: "var(--bg-surface)",
           position: "sticky",
           top: 0,
-          zIndex: 50,
+          zIndex: 40,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div className="status-dot" />
-            <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>SYSTEM ONLINE</span>
-          </div>
-          <span style={{ opacity: 0.3 }}>|</span>
-          <span style={{ color: "var(--text-secondary)" }}>
-            ENGINE: {hasApiKey ? "FREE GEMINI 2.5 FLASH (AI STUDIO)" : "LIVE DEMO BENCHMARK SUITE"}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+            Competitor Summarizer
           </span>
-          <span style={{ opacity: 0.3 }}>|</span>
-          <span style={{ color: "var(--status-green)", fontWeight: 600 }}>100% ZERO GCP BILLING</span>
+          <span style={{ color: "var(--border-subtle)" }}>/</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: "6px" }}>
+            <span className="live-status-dot" />
+            {hasApiKey ? "Gemini 2.5 Flash" : "8 Benchmarks Ready"}
+          </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <button
             onClick={() => setShowMatrix(!showMatrix)}
+            className="btn-secondary"
             style={{
-              background: showMatrix ? "var(--accent-blue)" : "transparent",
-              color: showMatrix ? "#FFFFFF" : "var(--text-primary)",
-              border: "1px solid var(--border-card)",
-              borderRadius: "6px",
-              padding: "4px 10px",
-              fontSize: "0.6875rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
+              padding: "5px 10px",
+              fontSize: "0.75rem",
+              background: showMatrix ? "var(--bg-subtle)" : undefined,
             }}
           >
             <Columns3 style={{ width: 13, height: 13 }} />
-            <span>Comparison Matrix ({comparisonList.length})</span>
+            <span>Compare ({comparisonList.length})</span>
           </button>
 
           <button
             onClick={() => setIsApiKeyModalOpen(true)}
-            style={{
-              background: hasApiKey ? "rgba(52, 199, 89, 0.1)" : "var(--accent-blue-light)",
-              color: hasApiKey ? "var(--status-green)" : "var(--accent-blue)",
-              border: `1px solid ${hasApiKey ? "rgba(52, 199, 89, 0.3)" : "rgba(0, 122, 255, 0.2)"}`,
-              borderRadius: "6px",
-              padding: "4px 10px",
-              fontSize: "0.6875rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
+            className="btn-secondary"
+            style={{ padding: "5px 10px", fontSize: "0.75rem" }}
           >
             <Key style={{ width: 13, height: 13 }} />
-            <span>{hasApiKey ? "Free API Key Configured" : "Add Free Gemini Key"}</span>
+            <span>{hasApiKey ? "API Key Configured" : "Add API Key"}</span>
           </button>
 
           <a
@@ -406,94 +375,62 @@ ${result.designer_summary}`;
             rel="noopener noreferrer"
             style={{
               textDecoration: "none",
-              color: "inherit",
-              opacity: 0.6,
-              transition: "opacity 0.2s ease",
+              color: "var(--text-muted)",
+              fontSize: "0.75rem",
+              marginLeft: "6px",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.6")}
           >
             fadly.uzzaki ↗
           </a>
         </div>
-      </div>
+      </nav>
 
-      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "40px 24px 80px" }}>
-        {/* Header Hero */}
-        <header style={{ marginBottom: "40px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "6px 14px",
-              borderRadius: "8px",
-              background: "var(--accent-blue-light)",
-              border: "1px solid rgba(0, 122, 255, 0.12)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.6875rem",
-              fontWeight: 600,
-              color: "var(--accent-blue)",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              marginBottom: "16px",
-            }}
-          >
-            <Sparkles style={{ width: 12, height: 12 }} />
-            AGENTIC COMPETITIVE INTELLIGENCE · GEMINI 2.5 FLASH
-          </div>
-
+      <main style={{ maxWidth: "860px", margin: "0 auto", padding: "48px 24px 80px" }}>
+        {/* Header */}
+        <header style={{ marginBottom: "32px" }}>
           <h1
             style={{
-              fontSize: "clamp(2.1rem, 5vw, 3.2rem)",
-              fontWeight: 800,
-              letterSpacing: "-0.035em",
-              lineHeight: 1.08,
+              fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
+              fontWeight: 700,
+              letterSpacing: "-0.03em",
+              lineHeight: 1.15,
               color: "var(--text-primary)",
-              margin: "0 0 14px 0",
-              textTransform: "uppercase",
+              margin: "0 0 10px 0",
             }}
           >
-            COMPETITOR LANDING PAGE<br />
-            <span style={{ color: "var(--accent-blue)" }}>SUMMARIZER</span>
+            Competitor Landing Page Intelligence
           </h1>
-
           <p
             style={{
-              fontFamily: "var(--font-serif)",
-              fontStyle: "italic",
-              fontSize: "1.25rem",
+              fontSize: "1rem",
               color: "var(--text-secondary)",
               margin: 0,
-              maxWidth: "680px",
+              maxWidth: "600px",
               lineHeight: 1.5,
             }}
           >
-            Instantly turn competitor landing pages into artifact-grade product design insights. Benchmark value propositions, CTA conversion paths, trust signals, and UX friction points.
+            Extract structured product-design insights from competitor pages. Benchmark value propositions, conversion paths, trust signals, and UX friction points.
           </p>
         </header>
 
         {/* Input Bar */}
-        <div
-          className="input-brand"
-          style={{
-            padding: "8px",
-            display: "flex",
-            flexDirection: "row",
-            gap: "8px",
-            position: "relative",
-            zIndex: 10,
-            marginBottom: "18px",
-          }}
-        >
-          <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center" }}>
+        <div className="input-section" style={{ marginBottom: "20px" }}>
+          <div
+            className="clean-input-wrapper"
+            style={{
+              padding: "6px 8px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
             <LinkIcon
               style={{
-                position: "absolute",
-                left: "16px",
-                width: "18px",
-                height: "18px",
+                width: "16px",
+                height: "16px",
                 color: "var(--text-muted)",
+                marginLeft: "8px",
+                flexShrink: 0,
               }}
             />
             <input
@@ -502,79 +439,58 @@ ${result.designer_summary}`;
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze(url)}
-              placeholder="Paste competitor URL (e.g. https://linear.app, https://stripe.com)..."
+              placeholder="Paste competitor URL (e.g. https://linear.app)..."
               disabled={loading}
               style={{
                 width: "100%",
-                paddingLeft: "48px",
-                paddingRight: "16px",
-                paddingTop: "16px",
-                paddingBottom: "16px",
+                padding: "10px 8px",
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                fontSize: "0.9375rem",
+                fontSize: "0.875rem",
                 fontFamily: "var(--font-mono)",
                 color: "var(--text-primary)",
               }}
             />
+            <button
+              id="analyze-btn"
+              onClick={() => handleAnalyze(url)}
+              disabled={loading || !url.trim()}
+              className="btn-primary"
+              style={{
+                padding: "10px 18px",
+                whiteSpace: "nowrap",
+                fontSize: "0.8125rem",
+              }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  Analyze Page
+                  <ArrowRight style={{ width: 14, height: 14 }} />
+                </>
+              )}
+            </button>
           </div>
-          <button
-            id="analyze-btn"
-            onClick={() => handleAnalyze(url)}
-            disabled={loading || !url.trim()}
-            className="btn-primary"
-            style={{
-              padding: "16px 28px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "0.875rem",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {loading ? (
-              <>
-                <Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                Analyze Page
-                <ArrowRight style={{ width: 18, height: 18 }} />
-              </>
-            )}
-          </button>
         </div>
 
-        {/* Live Demo Quick Switcher Chips */}
-        <div style={{ marginBottom: "32px" }}>
+        {/* Demo Chips */}
+        <div style={{ marginBottom: "36px" }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "10px",
+              fontSize: "0.75rem",
+              fontWeight: 500,
+              color: "var(--text-muted)",
+              marginBottom: "8px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <Compass style={{ width: 14, height: 14, color: "var(--accent-blue)" }} />
-              <span className="mono-label" style={{ color: "var(--text-primary)", fontWeight: 700 }}>
-                CURATED LIVE BENCHMARK DEMOS (1-CLICK INSTANT LOAD)
-              </span>
-            </div>
-            <span style={{ fontSize: "0.6875rem", fontFamily: "var(--font-mono)", color: "var(--status-green)" }}>
-              ● 8 DATASETS READY
-            </span>
+            Curated Benchmarks:
           </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             {DEMO_URLS.map((demoUrl) => {
               const demo = LIVE_DEMO_DATASETS[demoUrl];
               const isSelected = result?.url === demoUrl;
@@ -582,73 +498,52 @@ ${result.designer_summary}`;
                 <button
                   key={demoUrl}
                   onClick={() => handleSelectDemo(demoUrl)}
-                  className="chip"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    background: isSelected ? "var(--accent-blue)" : undefined,
-                    color: isSelected ? "#FFFFFF" : undefined,
-                    borderColor: isSelected ? "var(--accent-blue)" : undefined,
-                    boxShadow: isSelected ? "var(--shadow-blue-sm)" : undefined,
-                  }}
+                  className={`demo-chip ${isSelected ? "active" : ""}`}
                 >
-                  <span>{demo.logo_emoji || "⚡"}</span>
-                  <span style={{ fontWeight: 600 }}>{demo.product_brand}</span>
+                  {demo.product_brand}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Error State */}
+        {/* Error Notice */}
         <AnimatePresence>
           {error && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -8 }}
               style={{
-                marginBottom: "32px",
-                padding: "20px",
-                borderRadius: "var(--radius-card)",
-                background: "#FFF5F5",
-                border: "1px solid rgba(255, 59, 48, 0.2)",
-                boxShadow: "3px 3px 0px 0px rgba(255, 59, 48, 0.25)",
+                marginBottom: "28px",
+                padding: "16px 20px",
+                borderRadius: "var(--radius-lg)",
+                background: "var(--status-red-bg)",
+                border: "1px solid var(--status-red-border)",
                 display: "flex",
                 alignItems: "flex-start",
-                gap: "14px",
+                gap: "12px",
               }}
             >
-              <AlertCircle style={{ width: 20, height: 20, color: "var(--status-red)", marginTop: 2, flexShrink: 0 }} />
+              <AlertCircle style={{ width: 18, height: 18, color: "var(--status-red)", marginTop: 2, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
-                <h3 style={{ margin: "0 0 6px", fontWeight: 700, fontSize: "0.875rem", color: "var(--status-red)" }}>
-                  [NOTICE] Analysis Engine Configuration
-                </h3>
-                <p style={{ margin: "0 0 12px", fontSize: "0.8125rem", color: "#CC2D25", lineHeight: 1.5 }}>
+                <p style={{ margin: "0 0 10px", fontSize: "0.8125rem", color: "#991B1B", lineHeight: 1.5 }}>
                   {error}
                 </p>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   <button
                     onClick={() => setIsApiKeyModalOpen(true)}
                     className="btn-primary"
-                    style={{ padding: "6px 14px", fontSize: "0.75rem" }}
+                    style={{ padding: "5px 12px", fontSize: "0.75rem" }}
                   >
                     Add Free Gemini API Key
                   </button>
                   <button
                     onClick={() => handleSelectDemo("https://linear.app")}
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-card)",
-                      background: "var(--bg-card)",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
+                    className="btn-secondary"
+                    style={{ padding: "5px 12px", fontSize: "0.75rem" }}
                   >
-                    Explore Linear Live Benchmark
+                    View Linear Benchmark
                   </button>
                 </div>
               </div>
@@ -656,7 +551,7 @@ ${result.designer_summary}`;
           )}
         </AnimatePresence>
 
-        {/* Loading State */}
+        {/* Loading Skeletons */}
         <AnimatePresence>
           {loading && (
             <motion.div
@@ -664,35 +559,37 @@ ${result.designer_summary}`;
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               style={{
-                marginTop: "32px",
+                marginTop: "24px",
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                 gap: "16px",
               }}
             >
-              <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                <Loader2 style={{ width: 20, height: 20, color: "var(--accent-blue)", animation: "spin 1s linear infinite" }} />
-                <span className="mono-label" style={{ color: "var(--accent-blue)", fontWeight: 700 }}>
-                  [ {loadingStep.toUpperCase()} ]
+              <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                <Loader2 style={{ width: 16, height: 16, color: "var(--text-secondary)", animation: "spin 1s linear infinite" }} />
+                <span style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                  {loadingStep}
                 </span>
               </div>
               {RESULT_SECTIONS.map((section, i) => {
-                const isFullWidth = section.key === "information_hierarchy" || section.key === "design_opportunities" || section.key === "designer_summary";
+                const isFullWidth =
+                  section.key === "information_hierarchy" ||
+                  section.key === "design_opportunities" ||
+                  section.key === "designer_summary";
                 return (
                   <div
                     key={`skeleton-${i}`}
                     className="skeleton-shimmer"
                     style={{
-                      padding: "24px",
-                      borderRadius: "var(--radius-card)",
+                      padding: "20px",
                       gridColumn: isFullWidth ? "1 / -1" : undefined,
-                      minHeight: section.key === "designer_summary" ? "160px" : "140px",
+                      minHeight: section.key === "designer_summary" ? "140px" : "120px",
                     }}
                   >
-                    <div className="skeleton-line" style={{ width: "60px", marginBottom: "16px" }} />
+                    <div className="skeleton-line" style={{ width: "80px", marginBottom: "14px" }} />
                     <div className="skeleton-line" style={{ width: "60%" }} />
                     <div className="skeleton-line" style={{ width: "90%" }} />
-                    <div className="skeleton-line" style={{ width: "75%" }} />
+                    <div className="skeleton-line" style={{ width: "70%" }} />
                   </div>
                 );
               })}
@@ -700,7 +597,7 @@ ${result.designer_summary}`;
           )}
         </AnimatePresence>
 
-        {/* Side-by-Side Comparison Matrix View */}
+        {/* Comparison Matrix */}
         {showMatrix && (
           <ComparisonMatrix
             selectedItems={comparisonList}
@@ -714,192 +611,103 @@ ${result.designer_summary}`;
           />
         )}
 
-        {/* Main Analysis Result View */}
+        {/* Main Result */}
         <AnimatePresence>
           {result && !loading && (
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ marginTop: "16px" }}
+              transition={{ duration: 0.2 }}
             >
-              {/* Results Top Header */}
+              {/* Product Header */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
                   justifyContent: "space-between",
-                  paddingBottom: "20px",
+                  paddingBottom: "16px",
                   borderBottom: "1px solid var(--border-subtle)",
-                  marginBottom: "24px",
+                  marginBottom: "20px",
                   flexWrap: "wrap",
-                  gap: "16px",
+                  gap: "14px",
                 }}
               >
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <div className="mono-label" style={{ color: "var(--status-green)", fontWeight: 700 }}>
-                      [ANALYSIS_VERIFIED]
-                    </div>
-                    {result.is_live_demo && (
-                      <span
-                        style={{
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          background: "var(--accent-blue-light)",
-                          color: "var(--accent-blue)",
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "0.625rem",
-                          fontWeight: 700,
-                        }}
-                      >
-                        LIVE DEMO BENCHMARK
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "1.75rem" }}>{result.logo_emoji || "🌐"}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
                     <h2
                       style={{
                         margin: 0,
-                        fontSize: "1.875rem",
-                        fontWeight: 800,
-                        letterSpacing: "-0.025em",
+                        fontSize: "1.5rem",
+                        fontWeight: 700,
+                        letterSpacing: "-0.02em",
                         color: "var(--text-primary)",
                       }}
                     >
                       {result.product_brand}
                     </h2>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" }}>
-                    <a
-                      href={result.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.75rem",
-                        color: "var(--accent-blue)",
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      {result.url} <ExternalLink style={{ width: 12, height: 12 }} />
-                    </a>
                     {result.category && (
-                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                        • {result.category}
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--text-muted)",
+                          background: "var(--bg-subtle)",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {result.category}
                       </span>
                     )}
                   </div>
+
+                  <a
+                    href={result.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      fontSize: "0.75rem",
+                      fontFamily: "var(--font-mono)",
+                      color: "var(--accent-blue)",
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px",
+                    }}
+                  >
+                    {result.url} <ExternalLink style={{ width: 11, height: 11 }} />
+                  </a>
                 </div>
 
-                {/* Action Buttons */}
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  <button
-                    onClick={handleAddToComparison}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--accent-blue)",
-                      background: "var(--accent-blue-light)",
-                      color: "var(--accent-blue)",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Columns3 style={{ width: 14, height: 14 }} />
-                    Compare Matrix
+                {/* Actions */}
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  <button onClick={handleAddToComparison} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
+                    <Columns3 style={{ width: 13, height: 13 }} />
+                    Compare
                   </button>
 
-                  <button
-                    onClick={handleCopyJson}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-card)",
-                      background: "var(--bg-card)",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {copiedJson ? <Check style={{ width: 14, height: 14, color: "var(--status-green)" }} /> : <Braces style={{ width: 14, height: 14 }} />}
-                    {copiedJson ? "Copied!" : "JSON"}
+                  <button onClick={handleCopyJson} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
+                    {copiedJson ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Braces style={{ width: 13, height: 13 }} />}
+                    {copiedJson ? "Copied" : "JSON"}
                   </button>
 
-                  <button
-                    onClick={handleCopyMarkdown}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-card)",
-                      background: "var(--bg-card)",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {copiedMd ? <Check style={{ width: 14, height: 14, color: "var(--status-green)" }} /> : <Copy style={{ width: 14, height: 14 }} />}
-                    {copiedMd ? "Copied!" : "Markdown"}
+                  <button onClick={handleCopyMarkdown} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
+                    {copiedMd ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Copy style={{ width: 13, height: 13 }} />}
+                    {copiedMd ? "Copied" : "Markdown"}
                   </button>
 
-                  <button
-                    onClick={handleExportCsv}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-card)",
-                      background: "var(--bg-card)",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {copiedCsv ? <Check style={{ width: 14, height: 14, color: "var(--status-green)" }} /> : <Download style={{ width: 14, height: 14 }} />}
-                    {copiedCsv ? "Exported!" : "CSV"}
+                  <button onClick={handleExportCsv} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }}>
+                    {copiedCsv ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Download style={{ width: 13, height: 13 }} />}
+                    {copiedCsv ? "Exported" : "CSV"}
                   </button>
 
-                  <button
-                    onClick={() => window.print()}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-card)",
-                      background: "var(--bg-card)",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                    title="Print or Save as PDF"
-                  >
-                    <Printer style={{ width: 14, height: 14 }} />
+                  <button onClick={() => window.print()} className="btn-secondary" style={{ padding: "6px 10px", fontSize: "0.75rem" }} title="Print / PDF">
+                    <Printer style={{ width: 13, height: 13 }} />
                   </button>
                 </div>
               </div>
 
-              {/* UX Scorecard Widget */}
-              <ScorecardWidget scores={result.scores} brand={result.product_brand} />
+              {/* Product Specifications Bar */}
+              <ProductSpecsBar specs={result.specs} brand={result.product_brand} />
 
               {/* Filter & Search Bar */}
               <div
@@ -907,32 +715,33 @@ ${result.designer_summary}`;
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  marginBottom: "20px",
+                  marginBottom: "16px",
                   flexWrap: "wrap",
-                  gap: "12px",
+                  gap: "10px",
                 }}
               >
-                {/* Category Tabs */}
-                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {/* Category Filter Tabs */}
+                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
                   {(
                     [
                       { id: "all", label: "All Insights" },
-                      { id: "strategy", label: "Strategy & Trust" },
-                      { id: "ux", label: "Hierarchy & Copy" },
-                      { id: "opportunities", label: "Friction & Opportunities" },
+                      { id: "strategy", label: "Value & Strategy" },
+                      { id: "ux", label: "Hierarchy & Microcopy" },
+                      { id: "opportunities", label: "Friction & Gaps" },
                     ] as const
                   ).map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveCategory(tab.id)}
                       style={{
-                        padding: "6px 12px",
-                        borderRadius: "6px",
-                        border: "1px solid var(--border-card)",
-                        background: activeCategory === tab.id ? "var(--text-primary)" : "var(--bg-card)",
+                        padding: "5px 10px",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid",
+                        borderColor: activeCategory === tab.id ? "#0F172A" : "var(--border-subtle)",
+                        background: activeCategory === tab.id ? "#0F172A" : "var(--bg-surface)",
                         color: activeCategory === tab.id ? "#FFFFFF" : "var(--text-secondary)",
                         fontSize: "0.75rem",
-                        fontWeight: 600,
+                        fontWeight: 500,
                         cursor: "pointer",
                         transition: "all 0.15s ease",
                       }}
@@ -942,16 +751,16 @@ ${result.designer_summary}`;
                   ))}
                 </div>
 
-                {/* Search in Result */}
-                <div style={{ position: "relative", minWidth: "220px" }}>
+                {/* Search */}
+                <div style={{ position: "relative", minWidth: "200px" }}>
                   <Search
                     style={{
                       position: "absolute",
-                      left: "10px",
+                      left: "9px",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      width: "14px",
-                      height: "14px",
+                      width: "13px",
+                      height: "13px",
                       color: "var(--text-muted)",
                     }}
                   />
@@ -962,13 +771,13 @@ ${result.designer_summary}`;
                     placeholder="Search in insights..."
                     style={{
                       width: "100%",
-                      paddingLeft: "32px",
-                      paddingRight: "10px",
-                      paddingTop: "6px",
-                      paddingBottom: "6px",
-                      borderRadius: "6px",
+                      paddingLeft: "28px",
+                      paddingRight: "8px",
+                      paddingTop: "5px",
+                      paddingBottom: "5px",
+                      borderRadius: "var(--radius-sm)",
                       border: "1px solid var(--border-card)",
-                      background: "var(--bg-card)",
+                      background: "var(--bg-surface)",
                       fontSize: "0.75rem",
                       outline: "none",
                     }}
@@ -976,12 +785,12 @@ ${result.designer_summary}`;
                 </div>
               </div>
 
-              {/* Insight Cards Grid */}
+              {/* Cards Grid */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-                  gap: "16px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  gap: "14px",
                 }}
               >
                 {filteredSections.map((section, i) => {
@@ -997,51 +806,28 @@ ${result.designer_summary}`;
                   return (
                     <motion.div
                       key={section.key}
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04, duration: 0.25 }}
-                      className={isOpportunities ? "card-accent" : "card-brand"}
+                      transition={{ delay: i * 0.03, duration: 0.2 }}
+                      className="clean-card"
                       style={{
-                        padding: "24px",
+                        padding: "20px",
                         gridColumn: isFullWidth ? "1 / -1" : undefined,
                         ...(isSummary
                           ? {
-                              background: "var(--accent-blue-light)",
-                              borderColor: "rgba(0, 122, 255, 0.16)",
-                            }
-                          : {}),
-                        ...(isFriction
-                          ? {
-                              borderColor: "rgba(255, 59, 48, 0.2)",
+                              background: "var(--bg-subtle)",
+                              borderColor: "var(--border-subtle)",
                             }
                           : {}),
                       }}
                     >
-                      <div
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "0.6875rem",
-                          fontWeight: 700,
-                          letterSpacing: "0.06em",
-                          textTransform: "uppercase",
-                          marginBottom: "10px",
-                          color: isOpportunities
-                            ? "rgba(255,255,255,0.7)"
-                            : isFriction
-                            ? "var(--status-red)"
-                            : "var(--text-muted)",
-                        }}
-                      >
-                        [{section.tag}]
-                      </div>
-
                       <h3
                         style={{
-                          margin: "0 0 10px",
-                          fontSize: "0.9375rem",
-                          fontWeight: 700,
+                          margin: "0 0 8px",
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          color: isFriction ? "#B91C1C" : isOpportunities ? "#1D4ED8" : "var(--text-primary)",
                           letterSpacing: "-0.01em",
-                          color: isOpportunities ? "#FFFFFF" : "var(--text-primary)",
                         }}
                       >
                         {section.label}
@@ -1051,18 +837,14 @@ ${result.designer_summary}`;
                         <ul
                           style={{
                             margin: 0,
-                            paddingLeft: "18px",
-                            fontSize: "0.875rem",
-                            lineHeight: 1.65,
-                            color: isOpportunities
-                              ? "rgba(255,255,255,0.9)"
-                              : isFriction
-                              ? "var(--text-primary)"
-                              : "var(--text-secondary)",
+                            paddingLeft: "16px",
+                            fontSize: "0.8125rem",
+                            lineHeight: 1.6,
+                            color: "var(--text-secondary)",
                           }}
                         >
                           {value.map((item, j) => (
-                            <li key={j} style={{ marginBottom: "6px" }}>
+                            <li key={j} style={{ marginBottom: "4px" }}>
                               {item}
                             </li>
                           ))}
@@ -1071,13 +853,9 @@ ${result.designer_summary}`;
                         <p
                           style={{
                             margin: 0,
-                            fontSize: "0.875rem",
-                            lineHeight: 1.65,
-                            color: isOpportunities
-                              ? "rgba(255,255,255,0.9)"
-                              : isSummary
-                              ? "var(--text-primary)"
-                              : "var(--text-secondary)",
+                            fontSize: "0.8125rem",
+                            lineHeight: 1.6,
+                            color: isSummary ? "var(--text-primary)" : "var(--text-secondary)",
                             fontWeight: isSummary ? 500 : 400,
                           }}
                         >
@@ -1091,22 +869,20 @@ ${result.designer_summary}`;
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </main>
 
       {/* Footer */}
       <footer
         style={{
           borderTop: "1px solid var(--border-subtle)",
-          padding: "20px 24px",
+          padding: "16px 24px",
           textAlign: "center",
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.6875rem",
+          fontSize: "0.75rem",
           color: "var(--text-muted)",
-          letterSpacing: "0.06em",
-          background: "var(--bg-card)",
+          background: "var(--bg-surface)",
         }}
       >
-        <span>BUILT BY </span>
+        <span>Crafted by </span>
         <a
           href="https://fadlyzaki-design.vercel.app/"
           target="_blank"
@@ -1114,16 +890,15 @@ ${result.designer_summary}`;
           style={{
             color: "var(--text-primary)",
             textDecoration: "none",
-            borderBottom: "1px solid var(--border-subtle)",
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
-          FADLY UZZAKI
+          Fadly Uzzaki
         </a>
-        <span> · POWERED BY GEMINI 2.5 FLASH · 100% ZERO CLOUD BILLING · ADK + MCP</span>
+        <span> · Competitor Landing Page Intelligence</span>
       </footer>
 
-      {/* Free Gemini API Key Settings Modal */}
+      {/* API Key Modal */}
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}
