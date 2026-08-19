@@ -26,7 +26,6 @@ import {
   PenTool,
   AlertTriangle,
   Sparkles,
-  Compass,
   Cpu,
   Palette,
   Bot,
@@ -45,6 +44,7 @@ import {
   analyzeWithGeminiFree,
 } from "./lib/geminiAnalyzer";
 import { ProductSpecsBar } from "./components/ProductSpecsBar";
+import { DesignerTakeaway } from "./components/DesignerTakeaway";
 import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ComparisonMatrix } from "./components/ComparisonMatrix";
 
@@ -61,13 +61,12 @@ type ResultSectionKey =
   | "information_hierarchy"
   | "ux_writing_notes"
   | "friction_points"
-  | "design_opportunities"
-  | "designer_summary";
+  | "design_opportunities";
 
 interface SectionConfig {
   key: ResultSectionKey;
   label: string;
-  category: "strategy" | "ux" | "opportunities" | "summary";
+  category: "strategy" | "ux" | "opportunities";
   icon: React.ReactNode;
 }
 
@@ -119,12 +118,6 @@ const RESULT_SECTIONS: SectionConfig[] = [
     label: "Design Opportunities & Strategic Gaps",
     category: "opportunities",
     icon: <Sparkles style={{ width: 16, height: 16, color: "#2563EB" }} />,
-  },
-  {
-    key: "designer_summary",
-    label: "Product Designer Takeaway",
-    category: "summary",
-    icon: <Compass style={{ width: 16, height: 16, color: "#0F172A" }} />,
   },
 ];
 
@@ -1085,7 +1078,7 @@ ${result.designer_summary}`;
                 </div>
               </div>
 
-              {/* Cards Grid: Balanced Symmetry */}
+              {/* Cards Grid: Balanced 2-Column Symmetry */}
               <div
                 style={{
                   display: "grid",
@@ -1094,11 +1087,8 @@ ${result.designer_summary}`;
                 }}
               >
                 {filteredSections.map((section, i) => {
-                  const isSummary = section.key === "designer_summary";
                   const isFriction = section.key === "friction_points";
                   const isOpportunities = section.key === "design_opportunities";
-
-                  const isFullSpan = activeCategory === "all" && isSummary;
                   const value = result[section.key];
 
                   return (
@@ -1110,15 +1100,8 @@ ${result.designer_summary}`;
                       className="clean-card"
                       style={{
                         padding: "20px",
-                        gridColumn: isFullSpan ? "1 / -1" : undefined,
                         display: "flex",
                         flexDirection: "column",
-                        ...(isSummary
-                          ? {
-                              background: "var(--bg-subtle)",
-                              borderColor: "var(--border-subtle)",
-                            }
-                          : {}),
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
@@ -1159,8 +1142,7 @@ ${result.designer_summary}`;
                               margin: 0,
                               fontSize: "0.8125rem",
                               lineHeight: 1.6,
-                              color: isSummary ? "var(--text-primary)" : "var(--text-secondary)",
-                              fontWeight: isSummary ? 500 : 400,
+                              color: "var(--text-secondary)",
                             }}
                           >
                             {String(value || "")}
@@ -1171,6 +1153,9 @@ ${result.designer_summary}`;
                   );
                 })}
               </div>
+
+              {/* Dedicated Senior Designer Executive Takeaway Callout */}
+              <DesignerTakeaway summary={result.designer_summary} brand={result.product_brand} />
             </motion.div>
           )}
         </AnimatePresence>
