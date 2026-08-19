@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { AnalysisResult, LIVE_DEMO_DATASETS, DEMO_URLS } from "../lib/liveDemos";
-import { X, Plus, Download, Copy, Check, ExternalLink } from "lucide-react";
+import { X, Plus, Download, Copy, Check, ExternalLink, Search } from "lucide-react";
 
 interface Props {
   selectedItems: AnalysisResult[];
@@ -23,14 +23,24 @@ export function ComparisonMatrix({
   const [copiedMd, setCopiedMd] = useState(false);
   const [copiedCsv, setCopiedCsv] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [addMenuSearch, setAddMenuSearch] = useState("");
 
   const availableToAdd = DEMO_URLS.filter(
     (url) => !selectedItems.some((item) => item.url === url)
-  );
+  ).filter((url) => {
+    if (!addMenuSearch.trim()) return true;
+    const item = LIVE_DEMO_DATASETS[url];
+    const q = addMenuSearch.toLowerCase();
+    return (
+      item.product_brand.toLowerCase().includes(q) ||
+      (item.category || "").toLowerCase().includes(q) ||
+      item.url.toLowerCase().includes(q)
+    );
+  });
 
   const handleExportMarkdown = () => {
     let md = `# Competitor Landing Page Comparison Matrix\n\n`;
-    md += `| Criteria | ${selectedItems.map((i) => `**${i.product_brand}** (${i.url})`).join(" | ")} |\n`;
+    md += `| Dimension | ${selectedItems.map((i) => `**${i.product_brand}** (${i.url})`).join(" | ")} |\n`;
     md += `|---|${selectedItems.map(() => "---").join("|")}|\n`;
 
     md += `| **Core Value Prop** | ${selectedItems.map((i) => i.core_value_proposition.replace(/\|/g, "\\|")).join(" | ")} |\n`;
@@ -48,11 +58,11 @@ export function ComparisonMatrix({
 
   const handleExportCsv = () => {
     const escapeCsv = (str: string) => `"${(str || "").replace(/"/g, '""')}"`;
-    const headers = ["Criteria", ...selectedItems.map((i) => i.product_brand)];
+    const headers = ["Dimension", ...selectedItems.map((i) => i.product_brand)];
 
     const rows = [
       ["URL", ...selectedItems.map((i) => i.url)],
-      ["Tagline", ...selectedItems.map((i) => i.tagline || "")],
+      ["Category", ...selectedItems.map((i) => i.category || "")],
       ["Core Value Proposition", ...selectedItems.map((i) => i.core_value_proposition)],
       ["Target Audience", ...selectedItems.map((i) => i.target_audience)],
       ["Main CTAs", ...selectedItems.map((i) => i.cta_strategy.join("; "))],
@@ -112,20 +122,15 @@ export function ComparisonMatrix({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          {/* Add Competitor */}
+          {/* Add Competitor with Search */}
           <div style={{ position: "relative" }}>
             <button
               onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
-              disabled={availableToAdd.length === 0}
-              className="btn-secondary"
-              style={{
-                padding: "6px 12px",
-                fontSize: "0.75rem",
-                cursor: availableToAdd.length === 0 ? "not-allowed" : "pointer",
-              }}
+              className="btn-action-compare"
+              style={{ padding: "6px 12px", fontSize: "0.75rem" }}
             >
               <Plus style={{ width: 13, height: 13 }} />
-              Add Competitor
+              Add Competitor ({availableToAdd.length} available)
             </button>
 
             {isAddMenuOpen && (
@@ -139,63 +144,90 @@ export function ComparisonMatrix({
                   border: "1px solid var(--border-card)",
                   borderRadius: "var(--radius-md)",
                   boxShadow: "var(--shadow-modal)",
-                  minWidth: "200px",
+                  minWidth: "260px",
+                  maxHeight: "320px",
                   zIndex: 50,
                   overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
                 }}
               >
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    fontSize: "0.6875rem",
-                    fontWeight: 600,
-                    color: "var(--text-muted)",
-                    borderBottom: "1px solid var(--border-subtle)",
-                  }}
-                >
-                  Select a competitor
-                </div>
-                {availableToAdd.map((u) => {
-                  const demo = LIVE_DEMO_DATASETS[u];
-                  return (
-                    <button
-                      key={u}
-                      onClick={() => {
-                        onAddItem(demo);
-                        setIsAddMenuOpen(false);
-                      }}
+                <div style={{ padding: "8px", borderBottom: "1px solid var(--border-subtle)", background: "var(--bg-subtle)" }}>
+                  <div style={{ position: "relative" }}>
+                    <Search style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "12px", height: "12px", color: "var(--text-muted)" }} />
+                    <input
+                      type="text"
+                      value={addMenuSearch}
+                      onChange={(e) => setAddMenuSearch(e.target.value)}
+                      placeholder="Search 50 benchmarks..."
                       style={{
                         width: "100%",
-                        padding: "8px 12px",
-                        textAlign: "left",
-                        background: "transparent",
-                        border: "none",
-                        fontSize: "0.8125rem",
-                        color: "var(--text-primary)",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        borderBottom: "1px solid var(--border-subtle)",
+                        paddingLeft: "26px",
+                        paddingRight: "8px",
+                        paddingTop: "4px",
+                        paddingBottom: "4px",
+                        fontSize: "0.75rem",
+                        borderRadius: "4px",
+                        border: "1px solid var(--border-card)",
+                        outline: "none",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <span>{demo.product_brand}</span>
-                    </button>
-                  );
-                })}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div style={{ overflowY: "auto", flex: 1, maxHeight: "240px" }}>
+                  {availableToAdd.length === 0 ? (
+                    <div style={{ padding: "12px", fontSize: "0.75rem", color: "var(--text-muted)", textAlign: "center" }}>
+                      No matching competitors
+                    </div>
+                  ) : (
+                    availableToAdd.map((u) => {
+                      const demo = LIVE_DEMO_DATASETS[u];
+                      return (
+                        <button
+                          key={u}
+                          onClick={() => {
+                            onAddItem(demo);
+                            setIsAddMenuOpen(false);
+                            setAddMenuSearch("");
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            textAlign: "left",
+                            background: "transparent",
+                            border: "none",
+                            fontSize: "0.8125rem",
+                            color: "var(--text-primary)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "8px",
+                            borderBottom: "1px solid var(--border-subtle)",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <span style={{ fontWeight: 500 }}>{demo.product_brand}</span>
+                          <span style={{ fontSize: "0.6875rem", color: "var(--text-muted)" }}>{demo.group || demo.category}</span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          <button onClick={handleExportMarkdown} className="btn-secondary" style={{ padding: "6px 12px", fontSize: "0.75rem" }}>
-            {copiedMd ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Copy style={{ width: 13, height: 13 }} />}
+          <button onClick={handleExportMarkdown} className="btn-action-markdown" style={{ padding: "6px 12px", fontSize: "0.75rem" }}>
+            {copiedMd ? <Check style={{ width: 13, height: 13 }} /> : <Copy style={{ width: 13, height: 13 }} />}
             {copiedMd ? "Copied" : "Copy Markdown"}
           </button>
 
-          <button onClick={handleExportCsv} className="btn-secondary" style={{ padding: "6px 12px", fontSize: "0.75rem" }}>
-            {copiedCsv ? <Check style={{ width: 13, height: 13, color: "var(--status-green)" }} /> : <Download style={{ width: 13, height: 13 }} />}
+          <button onClick={handleExportCsv} className="btn-action-csv" style={{ padding: "6px 12px", fontSize: "0.75rem" }}>
+            {copiedCsv ? <Check style={{ width: 13, height: 13 }} /> : <Download style={{ width: 13, height: 13 }} />}
             {copiedCsv ? "Exported" : "CSV"}
           </button>
 

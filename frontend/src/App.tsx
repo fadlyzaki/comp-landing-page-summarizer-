@@ -136,6 +136,10 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Benchmarks Group Filter
+  const [benchmarkGroup, setBenchmarkGroup] = useState<"ALL" | "DevTools" | "Productivity" | "AI" | "Fintech" | "Consumer">("ALL");
+  const [benchmarkSearch, setBenchmarkSearch] = useState("");
+
   // Modals & Matrix
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
@@ -395,6 +399,23 @@ ${result.designer_summary}`;
     setShowMatrix(true);
   };
 
+  // Filter 50 curated benchmarks
+  const filteredBenchmarks = DEMO_URLS.filter((u) => {
+    const demo = LIVE_DEMO_DATASETS[u];
+    if (benchmarkGroup !== "ALL" && demo.group !== benchmarkGroup) {
+      return false;
+    }
+    if (benchmarkSearch.trim()) {
+      const q = benchmarkSearch.toLowerCase();
+      return (
+        demo.product_brand.toLowerCase().includes(q) ||
+        (demo.category || "").toLowerCase().includes(q) ||
+        demo.url.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
   // Filter sections based on active category and search query
   const filteredSections = RESULT_SECTIONS.filter((section) => {
     if (activeCategory !== "all") {
@@ -434,7 +455,7 @@ ${result.designer_summary}`;
           <span style={{ color: "var(--border-subtle)" }}>/</span>
           <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: "6px" }}>
             <span className="live-status-dot" />
-            {hasApiKey ? "Gemini 2.5 Flash" : "8 Benchmarks Ready"}
+            {hasApiKey ? "Gemini 2.5 Flash" : "50 Top Benchmarks Ready"}
           </span>
         </div>
 
@@ -473,7 +494,7 @@ ${result.designer_summary}`;
         </div>
       </nav>
 
-      <main style={{ maxWidth: "880px", margin: "0 auto", padding: "48px 24px 80px" }}>
+      <main style={{ maxWidth: "920px", margin: "0 auto", padding: "48px 24px 80px" }}>
         {/* Header */}
         <header style={{ marginBottom: "32px" }}>
           <h1
@@ -493,16 +514,16 @@ ${result.designer_summary}`;
               fontSize: "1rem",
               color: "var(--text-secondary)",
               margin: 0,
-              maxWidth: "600px",
+              maxWidth: "640px",
               lineHeight: 1.5,
             }}
           >
-            Extract structured product-design insights from competitor pages. Benchmark value propositions, conversion paths, trust signals, and UX friction points.
+            Extract structured product-design insights from competitor pages. Benchmark value propositions, conversion paths, trust signals, and UX friction points across 50 top tech products.
           </p>
         </header>
 
         {/* Input Bar */}
-        <div className="input-section" style={{ marginBottom: "20px" }}>
+        <div className="input-section" style={{ marginBottom: "24px" }}>
           <div
             className="clean-input-wrapper"
             style={{
@@ -528,7 +549,7 @@ ${result.designer_summary}`;
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze(url)}
-              placeholder="Paste competitor URL (e.g. https://linear.app)..."
+              placeholder="Paste any competitor URL or choose from 50 benchmarks below..."
               disabled={loading}
               style={{
                 width: "100%",
@@ -584,20 +605,88 @@ ${result.designer_summary}`;
           </div>
         </div>
 
-        {/* Curated Benchmark Pills (Royal Blue Active) */}
+        {/* 50 Curated Benchmarks Catalog (Group Tabs + Quick Search) */}
         <div style={{ marginBottom: "36px" }}>
           <div
             style={{
-              fontSize: "0.75rem",
-              fontWeight: 500,
-              color: "var(--text-muted)",
-              marginBottom: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+              flexWrap: "wrap",
+              gap: "8px",
             }}
           >
-            Curated Benchmarks:
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                Top 50 Curated Benchmarks:
+              </span>
+              <span style={{ fontSize: "0.6875rem", color: "var(--text-muted)", background: "var(--bg-track)", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                {filteredBenchmarks.length} / 50
+              </span>
+            </div>
+
+            {/* Category Filter for Benchmarks */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <div className="segmented-tab-track" style={{ padding: "2px" }}>
+                {(
+                  [
+                    { id: "ALL", label: "All" },
+                    { id: "DevTools", label: "DevTools (14)" },
+                    { id: "Productivity", label: "Productivity (11)" },
+                    { id: "AI", label: "Frontier AI (10)" },
+                    { id: "Fintech", label: "Fintech & B2B (11)" },
+                    { id: "Consumer", label: "Consumer (4)" },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setBenchmarkGroup(tab.id)}
+                    className={`segmented-tab ${benchmarkGroup === tab.id ? "active" : ""}`}
+                    style={{ padding: "3px 8px", fontSize: "0.6875rem" }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Benchmark Quick Filter */}
+              <div style={{ position: "relative", width: "140px" }}>
+                <Search style={{ position: "absolute", left: "7px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", color: "var(--text-muted)" }} />
+                <input
+                  type="text"
+                  value={benchmarkSearch}
+                  onChange={(e) => setBenchmarkSearch(e.target.value)}
+                  placeholder="Filter 50 sites..."
+                  style={{
+                    width: "100%",
+                    paddingLeft: "22px",
+                    paddingRight: "6px",
+                    paddingTop: "3px",
+                    paddingBottom: "3px",
+                    fontSize: "0.6875rem",
+                    borderRadius: "4px",
+                    border: "1px solid var(--border-card)",
+                    background: "var(--bg-surface)",
+                    outline: "none",
+                  }}
+                />
+              </div>
+            </div>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {DEMO_URLS.map((demoUrl) => {
+
+          {/* Benchmark Pills Grid */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "6px",
+              maxHeight: "180px",
+              overflowY: "auto",
+              padding: "4px 2px",
+            }}
+          >
+            {filteredBenchmarks.map((demoUrl) => {
               const demo = LIVE_DEMO_DATASETS[demoUrl];
               const isSelected = result?.url === demoUrl;
               return (
@@ -605,6 +694,8 @@ ${result.designer_summary}`;
                   key={demoUrl}
                   onClick={() => handleSelectDemo(demoUrl)}
                   className={`demo-chip ${isSelected ? "active" : ""}`}
+                  style={{ padding: "4px 10px", fontSize: "0.75rem" }}
+                  title={`${demo.product_brand} (${demo.category})`}
                 >
                   {demo.product_brand}
                 </button>
@@ -874,7 +965,7 @@ ${result.designer_summary}`;
                 </div>
               </div>
 
-              {/* Cards Grid: Perfectly Balanced */}
+              {/* Cards Grid: Balanced Symmetry */}
               <div
                 style={{
                   display: "grid",
@@ -887,7 +978,6 @@ ${result.designer_summary}`;
                   const isFriction = section.key === "friction_points";
                   const isOpportunities = section.key === "design_opportunities";
 
-                  // In "All" view, summary spans full width at the bottom as the conclusion
                   const isFullSpan = activeCategory === "all" && isSummary;
                   const value = result[section.key];
 
@@ -1021,7 +1111,7 @@ ${result.designer_summary}`;
         >
           Fadly Uzzaki
         </a>
-        <span> · Competitor Landing Page Intelligence</span>
+        <span> · 50 Curated Benchmarks & Competitor Landing Page Intelligence</span>
       </footer>
 
       {/* API Key Modal */}
