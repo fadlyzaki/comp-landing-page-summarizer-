@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Loader2,
   ArrowRight,
@@ -18,6 +18,15 @@ import {
   Search,
   ExternalLink,
   Printer,
+  Target,
+  Users,
+  MousePointerClick,
+  ShieldCheck,
+  Layers,
+  PenTool,
+  AlertTriangle,
+  Sparkles,
+  Compass,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -33,7 +42,7 @@ import { ProductSpecsBar } from "./components/ProductSpecsBar";
 import { ApiKeyModal } from "./components/ApiKeyModal";
 import { ComparisonMatrix } from "./components/ComparisonMatrix";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constants & Configurations ─────────────────────────────────────────────
 
 const ADK_BASE_URL = (import.meta as any).env?.VITE_ADK_API_BASE_URL || "";
 const ADK_APP_NAME = (import.meta as any).env?.VITE_ADK_APP_NAME || "competitor_summarizer";
@@ -53,18 +62,64 @@ interface SectionConfig {
   key: ResultSectionKey;
   label: string;
   category: "all" | "strategy" | "ux" | "opportunities";
+  icon: React.ReactNode;
 }
 
 const RESULT_SECTIONS: SectionConfig[] = [
-  { key: "core_value_proposition", label: "Core Value Proposition", category: "strategy" },
-  { key: "target_audience", label: "Likely Target Audience", category: "strategy" },
-  { key: "cta_strategy", label: "Calls to Action & Conversion Paths", category: "strategy" },
-  { key: "trust_signals", label: "Trust Signals & Social Proof", category: "strategy" },
-  { key: "information_hierarchy", label: "Information Hierarchy & Page Flow", category: "ux" },
-  { key: "ux_writing_notes", label: "UX Writing & Tone Observations", category: "ux" },
-  { key: "friction_points", label: "Potential Friction Points", category: "opportunities" },
-  { key: "design_opportunities", label: "Design Opportunities & Strategic Gaps", category: "opportunities" },
-  { key: "designer_summary", label: "Product Designer Takeaway", category: "all" },
+  {
+    key: "core_value_proposition",
+    label: "Core Value Proposition",
+    category: "strategy",
+    icon: <Target style={{ width: 16, height: 16, color: "var(--accent-blue)" }} />,
+  },
+  {
+    key: "target_audience",
+    label: "Likely Target Audience",
+    category: "strategy",
+    icon: <Users style={{ width: 16, height: 16, color: "#6366F1" }} />,
+  },
+  {
+    key: "cta_strategy",
+    label: "Calls to Action & Conversion Paths",
+    category: "strategy",
+    icon: <MousePointerClick style={{ width: 16, height: 16, color: "#059669" }} />,
+  },
+  {
+    key: "trust_signals",
+    label: "Trust Signals & Social Proof",
+    category: "strategy",
+    icon: <ShieldCheck style={{ width: 16, height: 16, color: "#2563EB" }} />,
+  },
+  {
+    key: "information_hierarchy",
+    label: "Information Hierarchy & Page Flow",
+    category: "ux",
+    icon: <Layers style={{ width: 16, height: 16, color: "#7C3AED" }} />,
+  },
+  {
+    key: "ux_writing_notes",
+    label: "UX Writing & Tone Observations",
+    category: "ux",
+    icon: <PenTool style={{ width: 16, height: 16, color: "#D97706" }} />,
+  },
+  {
+    key: "friction_points",
+    label: "Potential Friction Points",
+    category: "opportunities",
+    icon: <AlertTriangle style={{ width: 16, height: 16, color: "#DC2626" }} />,
+  },
+  {
+    key: "design_opportunities",
+    label: "Design Opportunities & Strategic Gaps",
+    category: "opportunities",
+    icon: <Sparkles style={{ width: 16, height: 16, color: "#2563EB" }} />,
+  },
+  {
+    key: "designer_summary",
+    label: "Product Designer Takeaway",
+    category: "all",
+    icon: <Compass style={{ width: 16, height: 16, color: "#0F172A" }} />,
+  },
 ];
 
 function generateId(): string {
@@ -79,6 +134,7 @@ export default function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "strategy" | "ux" | "opportunities">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modals & Matrix
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
@@ -86,10 +142,38 @@ export default function App() {
   const [showMatrix, setShowMatrix] = useState(false);
   const [comparisonList, setComparisonList] = useState<AnalysisResult[]>([]);
 
-  // Clipboard & export states
+  // Clipboard & export feedback
   const [copiedMd, setCopiedMd] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
   const [copiedCsv, setCopiedCsv] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? null : prev));
+    }, 2500);
+  };
+
+  // Keyboard shortcut listener (/ to focus input, Esc to close modals/matrix)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "/" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      } else if (e.key === "Escape") {
+        setShowMatrix(false);
+        setIsApiKeyModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Initialize key status and initial benchmark
   useEffect(() => {
@@ -108,6 +192,7 @@ export default function App() {
 
   const handleKeySaved = (key: string) => {
     setHasApiKey(Boolean(key && key.trim()));
+    showToast(key.trim() ? "API key saved" : "API key cleared");
   };
 
   const handleSelectDemo = (demoUrl: string) => {
@@ -116,6 +201,7 @@ export default function App() {
     const demoData = LIVE_DEMO_DATASETS[demoUrl];
     if (demoData) {
       setResult(demoData);
+      showToast(`Loaded ${demoData.product_brand} benchmark`);
     }
   };
 
@@ -133,6 +219,7 @@ export default function App() {
     // If pre-analyzed demo, load immediately
     if (LIVE_DEMO_DATASETS[formattedUrl]) {
       setResult(LIVE_DEMO_DATASETS[formattedUrl]);
+      showToast(`Loaded ${LIVE_DEMO_DATASETS[formattedUrl].product_brand} benchmark`);
       return;
     }
 
@@ -143,12 +230,13 @@ export default function App() {
 
     try {
       if (apiKey) {
-        setLoadingStep("Fetching page content...");
-        await new Promise((r) => setTimeout(r, 300));
-        setLoadingStep("Extracting product design insights...");
+        setLoadingStep("Fetching clean page content...");
+        await new Promise((r) => setTimeout(r, 200));
+        setLoadingStep("Extracting product design insights with Gemini...");
 
         const liveAnalysis = await analyzeWithGeminiFree(formattedUrl, apiKey);
         setResult(liveAnalysis);
+        showToast(`Analyzed ${liveAnalysis.product_brand}`);
 
         if (!comparisonList.some((c) => c.url === liveAnalysis.url)) {
           setComparisonList((prev) => [liveAnalysis, ...prev.slice(0, 3)]);
@@ -258,6 +346,7 @@ ${result.designer_summary}`;
 
     navigator.clipboard.writeText(md);
     setCopiedMd(true);
+    showToast("Markdown copied to clipboard");
     setTimeout(() => setCopiedMd(false), 2000);
   };
 
@@ -265,6 +354,7 @@ ${result.designer_summary}`;
     if (!result) return;
     navigator.clipboard.writeText(JSON.stringify(result, null, 2));
     setCopiedJson(true);
+    showToast("JSON payload copied");
     setTimeout(() => setCopiedJson(false), 2000);
   };
 
@@ -295,6 +385,7 @@ ${result.designer_summary}`;
     link.click();
 
     setCopiedCsv(true);
+    showToast("CSV exported");
     setTimeout(() => setCopiedCsv(false), 2000);
   };
 
@@ -336,8 +427,8 @@ ${result.designer_summary}`;
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-            Competitor Summarizer
+          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: "6px" }}>
+            <span>⚡</span> Competitor Summarizer
           </span>
           <span style={{ color: "var(--border-subtle)" }}>/</span>
           <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -434,6 +525,7 @@ ${result.designer_summary}`;
               }}
             />
             <input
+              ref={inputRef}
               id="url-input"
               type="url"
               value={url}
@@ -452,29 +544,46 @@ ${result.designer_summary}`;
                 color: "var(--text-primary)",
               }}
             />
-            <button
-              id="analyze-btn"
-              onClick={() => handleAnalyze(url)}
-              disabled={loading || !url.trim()}
-              className="btn-primary"
-              style={{
-                padding: "10px 18px",
-                whiteSpace: "nowrap",
-                fontSize: "0.8125rem",
-              }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  Analyze Page
-                  <ArrowRight style={{ width: 14, height: 14 }} />
-                </>
-              )}
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span
+                style={{
+                  fontSize: "0.6875rem",
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--text-muted)",
+                  background: "var(--bg-subtle)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "4px",
+                  padding: "2px 6px",
+                  display: "none",
+                }}
+                className="md:inline-block"
+              >
+                /
+              </span>
+              <button
+                id="analyze-btn"
+                onClick={() => handleAnalyze(url)}
+                disabled={loading || !url.trim()}
+                className="btn-primary"
+                style={{
+                  padding: "10px 18px",
+                  whiteSpace: "nowrap",
+                  fontSize: "0.8125rem",
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    Analyze Page
+                    <ArrowRight style={{ width: 14, height: 14 }} />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -821,17 +930,20 @@ ${result.designer_summary}`;
                           : {}),
                       }}
                     >
-                      <h3
-                        style={{
-                          margin: "0 0 8px",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          color: isFriction ? "#B91C1C" : isOpportunities ? "#1D4ED8" : "var(--text-primary)",
-                          letterSpacing: "-0.01em",
-                        }}
-                      >
-                        {section.label}
-                      </h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        {section.icon}
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                            color: isFriction ? "#B91C1C" : isOpportunities ? "#1D4ED8" : "var(--text-primary)",
+                            letterSpacing: "-0.01em",
+                          }}
+                        >
+                          {section.label}
+                        </h3>
+                      </div>
 
                       {Array.isArray(value) ? (
                         <ul
@@ -870,6 +982,37 @@ ${result.designer_summary}`;
           )}
         </AnimatePresence>
       </main>
+
+      {/* Floating Toast Feedback */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+            style={{
+              position: "fixed",
+              bottom: "24px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: "#0F172A",
+              color: "#FFFFFF",
+              padding: "8px 16px",
+              borderRadius: "9999px",
+              fontSize: "0.75rem",
+              fontWeight: 500,
+              boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <Check style={{ width: 14, height: 14, color: "#4ADE80" }} />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <footer
